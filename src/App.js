@@ -442,7 +442,7 @@ export default function App() {
       },
       inventory: initialInventory,
       npcs: inheritedNPCs,
-      world: { zones: inheritedZones.length ? inheritedZones : ["Zona Inicial"], events: [], climate: "Despejado", context: "Inicio de campaña." },
+      world: { zones: inheritedZones.length ? inheritedZones : ["Zona Inicial"], events: [], climate: "Despejado", season: "Otoño", context: "Inicio de campaña." },
       memory: {
         summary: initialMemorySummary,
         keyEvents: heritageSource ? [...heritageSource.memory.keyEvents] : [],
@@ -885,10 +885,12 @@ OTRAS REGLAS DE SIMULACIÓN:
 4. Si ocurre un evento histórico o hito de la campaña, agrégalo a "keyEventToAdd" (diario de eventos).
 5. Si la salud del personaje llega a 0, pon "isDead" en true y explica cómo murió en "deathMessage".
 6. Patrimonio y Finanzas: Puedes añadir o quitar propiedades en "propertiesAdd" / "propertiesRemove" y negocios en "businessesAdd" / "businessesRemove" si la narrativa lo justifica.
-7. Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
+7. Clima y Estación: Puedes cambiar dinámicamente el clima en "worldClimate" (ej: 'Tormenta de nieve', 'Soleado') y la estación del año en "worldSeason" (ej: 'Invierno', 'Primavera') según progrese la historia.
+8. Propuestas de Acción (suggestedActions): Deben corresponder estrictamente al contexto geográfico/narrativo actual, el momento del día actual (ej: noche requiere sigilo/refugio/antorchas), el clima/estación del año (ej: invierno requiere calentarse/buscar abrigo), y las necesidades físicas (salud baja requiere descanso/curación). Evita opciones genéricas y aburridas.
+9. Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
 {
   "narrative": "Tu narración literaria extendida (3-4 párrafos extensos y ricos en prosa) sobre el desenlace de la acción basándote en la tirada de dados.",
-  "suggestedActions": ["Acción 1", "Acción 2", "Acción 3", "Acción 4"],
+  "suggestedActions": ["Propuesta 1 (Contextual e inmediata)", "Propuesta 2", "Propuesta 3", "Propuesta 4"],
   "currentLocation": "Lugar actual (corto)",
   "locationImagePrompt": "Prompt en inglés descriptivo del lugar actual para generar una imagen con DALL-E, estilo Anime One Piece: vibrante, colorido, detallado.",
   "changes": {
@@ -903,6 +905,8 @@ OTRAS REGLAS DE SIMULACIÓN:
     "npcUpdates": [{"name": "Nombre", "role": "Rol", "relation": 5, "trust": 10, "location": "Lugar", "status": "Vivo"}],
     "worldEvents": [],
     "zonesAdd": [],
+    "worldClimate": "Nuevo clima si cambia (opcional)",
+    "worldSeason": "Nueva estación del año si cambia (opcional)",
     "temporal": { "date": "nueva fecha si aplica (opcional)" },
     "skillsImproved": [],
     "attrChanges": {} 
@@ -1058,6 +1062,14 @@ Genera el JSON de respuesta con el desenlace narrativo literario y extenso.`;
 
         if (changes.worldEvents && changes.worldEvents.length > 0) {
           nextCampaign.world.events = [...new Set([...nextCampaign.world.events, ...changes.worldEvents])];
+        }
+
+        if (changes.worldClimate) {
+          nextCampaign.world.climate = changes.worldClimate;
+        }
+
+        if (changes.worldSeason) {
+          nextCampaign.world.season = changes.worldSeason;
         }
 
         if (changes.zonesAdd && changes.zonesAdd.length > 0) {
@@ -1873,8 +1885,9 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 </span>
               </div>
             )}
-            <div style={{ position: "absolute", bottom: "0", left: "0", right: "0", background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)", padding: "10px 20px" }}>
+            <div style={{ position: "absolute", bottom: "0", left: "0", right: "0", background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)", padding: "10px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: "0.85rem", color: "#fff", fontWeight: "500" }}>Clima: {currentCampaign.world.climate}</span>
+              <span style={{ fontSize: "0.85rem", color: "#fff", fontWeight: "500" }}>Estación: {currentCampaign.world.season || "Otoño"}</span>
             </div>
             {isImageGenerating && (
               <div style={{ position: "absolute", top: "10px", right: "20px", fontSize: "0.75rem", background: "rgba(0,0,0,0.7)", padding: "2px 8px", borderRadius: "4px", border: "1px solid var(--accent-primary)", color: "var(--accent-primary)" }}>
