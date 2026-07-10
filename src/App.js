@@ -135,7 +135,7 @@ const DIFFICULTIES = [
 ];
 
 const TIMESCALES = [
-  { id: "moment", name: "Momento", desc: "Madrugada ➔ Mañana ➔ Mediodía ➔ Tarde ➔ Anochecer ➔ Noche" },
+  { id: "moment", name: "Tiempo Real (Minutos/Horas)", desc: "El transcurso del tiempo se calcula de forma dinámica y realista según la brevedad de tus acciones." },
   { id: "day", name: "Día", desc: "Cada turno representa un día de viaje o acción." },
   { id: "week", name: "Semana", desc: "Paso de tiempo acelerado de 7 días por turno." },
   { id: "month", name: "Mes", desc: "Evolución mensual, ideal para gestión o largos trayectos." },
@@ -370,8 +370,8 @@ export default function App() {
       worldNameStr = wizardWorldDesc || "Mundo Propio";
     }
 
-    let dateStr = "Día 1, Mañana";
-    if (wizardTimeScale === "moment") dateStr = "Mañana";
+    let dateStr = "Día 1, 08:00";
+    if (wizardTimeScale === "moment") dateStr = "Día 1, 08:00";
     else if (wizardTimeScale === "day") dateStr = "Día 1";
     else if (wizardTimeScale === "week") dateStr = "Semana 1";
     else if (wizardTimeScale === "month") dateStr = "Mes 1";
@@ -581,9 +581,29 @@ export default function App() {
   const advanceTime = (temporal) => {
     const { date, scale } = temporal;
     if (scale === "moment") {
+      // Check if format is "Día X, HH:MM" or similar
+      const match = date.match(/Día (\d+),\s*(\d{1,2}):(\d{2})/);
+      if (match) {
+        let day = parseInt(match[1], 10);
+        let hour = parseInt(match[2], 10);
+        let min = parseInt(match[3], 10);
+
+        // Advance by 1 hour by default (60 minutes) if not overridden
+        hour += 1;
+        if (hour >= 24) {
+          day += 1;
+          hour = hour % 24;
+        }
+
+        const hourStr = String(hour).padStart(2, "0");
+        const minStr = String(min).padStart(2, "0");
+        return `Día ${day}, ${hourStr}:${minStr}`;
+      }
+
+      // Legacy fallback
       const moments = ["Madrugada", "Mañana", "Mediodía", "Tarde", "Anochecer", "Noche"];
       const currentIdx = moments.indexOf(date);
-      if (currentIdx === -1) return "Mañana";
+      if (currentIdx === -1) return "Día 1, 08:00";
       const nextIdx = (currentIdx + 1) % moments.length;
       return moments[nextIdx];
     }
@@ -876,7 +896,6 @@ Sé coherente y proporcional al esfuerzo físico e intelectual de la acción:
 - Comer comida o raciones: Hambre negativo (ej: -20 a -45).
 - Dormir en una cama, descansar profundamente: Fatiga negativa (ej: -40 a -80), Hambre ligeramente aumentado (+3 a +6 por el transcurso de horas).
 - Recibir heridas físicas severas: Quita Salud ("health": -10 a -35).
-Escala todos estos valores según la dificultad seleccionada (${nextCampaign.difficulty}): fácil (reducido), medio (estándar), difícil (severo), leyenda (daño mortal y consumo extremo).
 
 OTRAS REGLAS DE SIMULACIÓN:
 1. Si el jugador realiza transacciones comerciales, debes incluir precios numéricos explícitos en la narrativa y reflejar los cambios en el JSON (inventoryAdd, inventoryConsume, wealth.money).
@@ -886,8 +905,9 @@ OTRAS REGLAS DE SIMULACIÓN:
 5. Si la salud del personaje llega a 0, pon "isDead" en true y explica cómo murió en "deathMessage".
 6. Patrimonio y Finanzas: Puedes añadir o quitar propiedades en "propertiesAdd" / "propertiesRemove" y negocios en "businessesAdd" / "businessesRemove" si la narrativa lo justifica.
 7. Clima y Estación: Puedes cambiar dinámicamente el clima en "worldClimate" (ej: 'Tormenta de nieve', 'Soleado') y la estación del año en "worldSeason" (ej: 'Invierno', 'Primavera') según progrese la historia.
-8. Propuestas de Acción (suggestedActions): Deben corresponder estrictamente al contexto geográfico/narrativo actual, el momento del día actual (ej: noche requiere sigilo/refugio/antorchas), el clima/estación del año (ej: invierno requiere calentarse/buscar abrigo), y las necesidades físicas (salud baja requiere descanso/curación). Evita opciones genéricas y aburridas.
-9. Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
+8. Transcurso del Tiempo (PROPORCIONAL Y DINÁMICO): Si la escala temporal es "moment", la hora actual tiene el formato "Día X, HH:MM" (ej: "Día 1, 08:00"). TÚ debes calcular el tiempo que tarda la acción propuesta por el jugador de forma realista y proporcional. Si la acción es extremadamente breve (ej: hacer una pregunta rápida, mirar una sala, escribir una nota, desenvainar), avanza solo de 2 a 10 minutos. Si es intermedia (ej: un combate corto, explorar a fondo un templo), avanza 30 minutos o 1 hora. Si es prolongada (ej: viajar a pie, acampar, dormir), avanza varias horas o un día. Devuelve la nueva fecha en "changes.temporal.date" (ej: "Día 1, 08:05").
+9. Propuestas de Acción (suggestedActions): Deben corresponder estrictamente al contexto geográfico/narrativo actual, el momento del día actual (ej: noche requiere sigilo/refugio/antorchas), el clima/estación del año (ej: invierno requiere calentarse/buscar abrigo), y las necesidades físicas (salud baja requiere descanso/curación). Evita opciones genéricas y aburridas.
+10. Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
 {
   "narrative": "Tu narración literaria extendida (3-4 párrafos extensos y ricos en prosa) sobre el desenlace de la acción basándote en la tirada de dados.",
   "suggestedActions": ["Propuesta 1 (Contextual e inmediata)", "Propuesta 2", "Propuesta 3", "Propuesta 4"],
