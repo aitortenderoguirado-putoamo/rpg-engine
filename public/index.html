@@ -145,6 +145,94 @@
     .glass-panel:hover {
       border-color: rgba(255, 255, 255, 0.12);
     }
+
+    /* Collapsible Sidebar system */
+    .game-container-flex {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      align-items: stretch;
+      transition: gap 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .main-narrative-area {
+      flex-grow: 1;
+      width: 68%;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .main-narrative-area.expanded {
+      width: 100%;
+    }
+    .sidebar-panel {
+      width: 32%;
+      min-width: 320px;
+      max-width: 380px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 1;
+      transform: translateX(0);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .sidebar-panel.collapsed {
+      width: 0;
+      min-width: 0;
+      max-width: 0;
+      opacity: 0;
+      transform: translateX(100px);
+      pointer-events: none;
+      margin: 0;
+      border: none;
+      padding: 0;
+    }
+
+    /* ChatGPT Chat Aesthetic bubbles */
+    .chat-bubble {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 24px;
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .user-bubble {
+      align-self: flex-end;
+      align-items: flex-end;
+      width: 100%;
+    }
+    .user-bubble-content {
+      background: rgba(168, 85, 247, 0.12);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      border-radius: 16px 16px 2px 16px;
+      padding: 12px 16px;
+      max-width: 80%;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .master-bubble {
+      align-self: flex-start;
+      align-items: flex-start;
+      width: 100%;
+    }
+    .master-bubble-content {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px 16px 16px 2px;
+      padding: 20px 24px;
+      width: 100%;
+      color: var(--text-primary);
+      font-size: 1.05rem;
+      line-height: 1.65;
+      box-sizing: border-box;
+      box-shadow: var(--shadow-md);
+    }
+    body.light-theme .user-bubble-content {
+      background: rgba(168, 85, 247, 0.08);
+      border-color: rgba(168, 85, 247, 0.2);
+    }
     
     /* Input & Button Base resets for nice look */
     input, textarea, select {

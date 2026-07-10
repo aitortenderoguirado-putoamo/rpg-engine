@@ -142,9 +142,8 @@ const TIMESCALES = [
   { id: "year", name: "Año", desc: "Evolución anual, transcurso de generaciones." }
 ];
 
-// --- FALLBACK SERVICES SETUP (USER PROFILE) ---
 const DEFAULT_SUPABASE_URL = "https://yfnabpnangkzyvwxwdhh.supabase.co";
-const DEFAULT_SUPABASE_KEY = ""; // Placeholder for anon key (user inputs)
+const DEFAULT_SUPABASE_KEY = "";
 
 export default function App() {
   // --- STATE VARIABLES ---
@@ -154,10 +153,10 @@ export default function App() {
 
   const [campaigns, setCampaigns] = useState([]);
   const [currentCampaign, setCurrentCampaign] = useState(null);
-  const [currentScreen, setCurrentScreen] = useState("campaigns"); // campaigns | create | game | settings | dead
+  const [currentScreen, setCurrentScreen] = useState("campaigns");
   
-  // Theme Toggle: Day Mode (light) vs Night Mode (dark)
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Wizard Creation State
   const [wizardStep, setWizardStep] = useState(1);
@@ -178,7 +177,7 @@ export default function App() {
   const [wizardTimeScale, setWizardTimeScale] = useState("moment");
 
   // Game UI State
-  const [activeTab, setActiveTab] = useState("personaje"); // personaje | memoria | mundo | patrimonio | inventario | npcs | diario
+  const [activeTab, setActiveTab] = useState("personaje");
   const [customAction, setCustomAction] = useState("");
   const [isRolling, setIsRolling] = useState(false);
   const [isLlmLoading, setIsLlmLoading] = useState(false);
@@ -195,10 +194,8 @@ export default function App() {
   const [adminBizName, setAdminBizName] = useState("");
   const [adminBizInc, setAdminBizInc] = useState(0);
 
-  // Heritage legacy transfer reference
   const [heritageSource, setHeritageSource] = useState(null);
 
-  // Ref for auto-scrolling narrative
   const narrativeEndRef = useRef(null);
   const [supabaseClient, setSupabaseClient] = useState(null);
 
@@ -411,7 +408,7 @@ export default function App() {
 
     const newCampaign = {
       id: Math.random().toString(36).substring(2, 15),
-      turn: 0, // Turn counter initialized
+      turn: 0,
       campaign: {
         name: `${wizardName} - ${worldNameStr}`,
         world: worldNameStr,
@@ -787,7 +784,6 @@ export default function App() {
       return;
     }
 
-    // --- CASE: ASK THE MASTER QUERY FLOW ---
     if (isQueryMode) {
       handleMasterQuery(actionText);
       return;
@@ -801,7 +797,7 @@ export default function App() {
     // 1. Increment Turn Counter
     nextCampaign.turn = (nextCampaign.turn || 0) + 1;
 
-    // 2. Apply Turn Stat Ticks (independent of action results)
+    // 2. Apply Turn Stat Ticks
     const diff = DIFFICULTIES.find(d => d.id === nextCampaign.difficulty) || DIFFICULTIES[1];
     let turnHungerRate = 10;
     let turnFatigueRate = 12;
@@ -818,7 +814,6 @@ export default function App() {
       nextCampaign.physical.health = Math.max(nextCampaign.physical.health - hungerDamage, 0);
     }
 
-    // Apply recurrent passive income/expenses on every turn
     if (nextCampaign.wealth) {
       nextCampaign.wealth.money = Math.max(0, nextCampaign.wealth.money + (nextCampaign.wealth.income || 0) - (nextCampaign.wealth.expenses || 0));
     }
@@ -874,7 +869,15 @@ ${nextCampaign.memory.keyEvents.slice(-20).map((e, i) => `- [${e.date}] ${e.desc
       return `Turno ${turn.turnNum || index} [${turn.date}]: Acción: "${turn.action}"\nTirada: ${turn.textRoll}\nResultado: ${turn.narrative}`;
     }).join("\n\n");
 
+    // ENHANCED SYSTEM PROMPT: Instructs GPT-4o to output extensive literary description (3-4 paragraphs)
     const systemPrompt = `Eres el Master de un juego de rol narrativo y simulación. Tu objetivo es narrar el resultado de la acción del jugador de forma inmersiva, reactiva y consistente con las reglas físicas, económicas y narrativas del mundo.
+
+ESTILO NARRATIVO REQUERIDO (ESTILO CHATGPT RPG LARGO):
+- Debes escribir con un estilo literario sumamente descriptivo, inmersivo, rico y detallado, exactamente igual a una partida de rol clásica y profunda en ChatGPT.
+- Cada respuesta narrativa debe ser extensa (entre 3 y 4 párrafos completos, largos y descriptivos).
+- Describe minuciosamente el entorno, los sonidos, los olores, la atmósfera, los diálogos de los personajes, las sensaciones físicas e internas del héroe, y las consecuencias físicas y psicológicas de la acción del jugador basándote en la tirada de dados indicada.
+- Evita por completo respuestas cortas, resúmenes escuetos o descripciones rápidas.
+
 Mundo: ${nextCampaign.campaign.world} ${nextCampaign.campaign.worldDesc ? `(${nextCampaign.campaign.worldDesc})` : ""}
 Región: ${nextCampaign.campaign.region || "N/A"}
 Dificultad: ${nextCampaign.difficulty} (DC Tiradas: ${rollInfo.dc})
@@ -890,7 +893,7 @@ REGLAS DE SIMULACIÓN IMPORTANTES:
 7. Patrimonio y Finanzas: Puedes añadir o quitar propiedades en "propertiesAdd" / "propertiesRemove" y negocios en "businessesAdd" / "businessesRemove" si la narrativa lo justifica.
 8. Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
 {
-  "narrative": "Narración en segunda persona (2-3 párrafos concisos) sobre el resultado de la acción basándote en la tirada de dados indicada.",
+  "narrative": "Tu narración literaria extendida (3-4 párrafos extensos y ricos en prosa) sobre el desenlace de la acción basándote en la tirada de dados.",
   "suggestedActions": ["Acción 1", "Acción 2", "Acción 3", "Acción 4"],
   "currentLocation": "Lugar actual (corto)",
   "locationImagePrompt": "Prompt en inglés descriptivo del lugar actual para generar una imagen con DALL-E, estilo Anime One Piece: vibrante, colorido, detallado.",
@@ -934,7 +937,7 @@ Modificadores aplicados: ${JSON.stringify(rollInfo.modifiers)}
 Habilidad emparejada: ${rollInfo.matchedSkill || "Ninguna"}
 Atributo emparejado: ${rollInfo.matchedAttr}
 
-Genera el JSON de respuesta con el desenlace narrativo basándote firmemente en el resultado de la tirada.`;
+Genera el JSON de respuesta con el desenlace narrativo literario y extenso.`;
 
     try {
       const rawContent = await callGPTNarrator(systemPrompt, userPrompt);
@@ -979,7 +982,6 @@ Genera el JSON de respuesta con el desenlace narrativo basándote firmemente en 
           nextCampaign.wealth.debts = Math.max(0, nextCampaign.wealth.debts + (changes.wealth.debts || 0));
         }
 
-        // Properties sync
         if (!nextCampaign.wealth.properties) nextCampaign.wealth.properties = [];
         if (changes.propertiesAdd && changes.propertiesAdd.length > 0) {
           changes.propertiesAdd.forEach(prop => {
@@ -994,7 +996,6 @@ Genera el JSON de respuesta con el desenlace narrativo basándote firmemente en 
           );
         }
 
-        // Businesses sync
         if (!nextCampaign.wealth.businesses) nextCampaign.wealth.businesses = [];
         if (changes.businessesAdd && changes.businessesAdd.length > 0) {
           changes.businessesAdd.forEach(biz => {
@@ -1143,9 +1144,8 @@ Genera el JSON de respuesta con el desenlace narrativo basándote firmemente en 
     setIsLlmLoading(true);
     let nextCampaign = { ...currentCampaign };
 
-    const systemPrompt = `Eres el Master de un juego de rol narrativo y simulación. El jugador te está haciendo una consulta directa (pregunta, aclaración o conocimiento general) sobre el entorno, el trasfondo o la situación en la que se encuentra.
-Tu objetivo es responder de forma inmersiva, consistente y manteniéndote en el papel de Master narrador. 
-Esta consulta es puramente descriptiva: NO avanza el tiempo, NO consume recursos físicos (hambre, fatiga, salud) ni modifica estadísticas o inventario.
+    const systemPrompt = `Eres el Master de un juego de rol narrativo y simulación. El jugador te está haciendo una consulta directa (pregunta o aclaración) sobre el entorno, el trasfondo o la situación en la que se encuentra.
+Tu objetivo es responder de forma sumamente atenta, inmersiva, detallada y literaria, manteniéndote en el papel de Master narrador (similar a ChatGPT).
 
 Mundo: ${nextCampaign.campaign.world}
 Región: ${nextCampaign.campaign.region || "N/A"}
@@ -1155,7 +1155,7 @@ Resumen de historia acumulado: ${nextCampaign.memory.summary}
 
 Responde exclusivamente en formato JSON estructurado:
 {
-  "narrative": "Tu respuesta descriptiva, atenta e inmersiva como Master de juego (1-2 párrafos)."
+  "narrative": "Tu respuesta descriptiva y aclaratoria inmersiva como Master (2-3 párrafos detallados)."
 }`;
 
     const userPrompt = `
@@ -1194,7 +1194,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
       await saveCampaignState(nextCampaign);
       setCurrentCampaign(nextCampaign);
       setCustomAction("");
-      setIsQueryMode(false); // Disable query checkbox
+      setIsQueryMode(false);
     } catch (err) {
       alert("Error al consultar al Master: " + err.message);
     } finally {
@@ -1239,7 +1239,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
   // --- RENDERING SCREENS ---
 
   return (
-    <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "20px" }}>
+    <div style={{ maxWidth: "1250px", margin: "0 auto", padding: "15px" }}>
       
       {/* 1. CAMPAIGNS SELECT SCREEN */}
       {currentScreen === "campaigns" && (
@@ -1249,7 +1249,6 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
               🔮 Motor RPG Persistente
             </h1>
             
-            {/* Header Controls: Theme toggle + Settings */}
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
               <button 
                 onClick={() => setTheme(prev => prev === "dark" ? "light" : "dark")}
@@ -1772,7 +1771,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
 
       {/* 4. MAIN GAMEPLAY DASHBOARD */}
       {currentScreen === "game" && currentCampaign && (
-        <div className="animate-fade" style={{ display: "grid", gridTemplateColumns: "1fr", gap: "20px" }}>
+        <div className="animate-fade" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           
           {/* Header Bar */}
           <header className="glass-panel" style={{ padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -1804,7 +1803,24 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 </span>
               </div>
 
-              {/* Day/Night Theme toggler */}
+              {/* Toggle Sidebar Button */}
+              <button 
+                onClick={() => setIsSidebarOpen(prev => !prev)}
+                className="glass-panel"
+                style={{ 
+                  padding: "6px 12px", 
+                  fontSize: "0.85rem", 
+                  fontWeight: "600", 
+                  cursor: "pointer", 
+                  border: isSidebarOpen ? "1px solid var(--accent-primary)" : "1px solid var(--card-border)",
+                  color: isSidebarOpen ? "var(--accent-primary)" : "var(--text-primary)",
+                  boxShadow: isSidebarOpen ? "var(--accent-glow)" : "none"
+                }}
+                title={isSidebarOpen ? "Ocultar panel de datos" : "Mostrar panel de datos"}
+              >
+                📋 Ficha
+              </button>
+
               <button 
                 onClick={() => setTheme(prev => prev === "dark" ? "light" : "dark")}
                 className="glass-panel"
@@ -1867,45 +1883,63 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
             )}
           </div>
 
-          {/* Main Content Layout */}
-          <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: "20px" }}>
+          {/* Collapsible Flex Layout */}
+          <div className="game-container-flex" style={{ gap: isSidebarOpen ? "20px" : "0px" }}>
             
-            {/* Left Column: Narrative Box & Actions */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+            {/* Left Column: Narrative Box & Actions (Chat ChatGPT Style) */}
+            <div className={`main-narrative-area ${!isSidebarOpen ? "expanded" : ""}`}>
               
-              {/* Narrative Panel */}
+              {/* Narrative Panel (ChatGPT Session look) */}
               <div 
                 className="glass-panel" 
                 style={{ 
-                  height: "380px", 
-                  padding: "20px", 
+                  height: "560px", // Increased height for text dominance
+                  padding: "20px 25px", 
                   overflowY: "auto", 
                   display: "flex", 
                   flexDirection: "column",
-                  gap: "20px" 
+                  gap: "5px"
                 }}
               >
-                <div style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "10px" }}>
-                  <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Comienzo de la aventura:</p>
-                  <p style={{ fontSize: "0.95rem", color: "var(--text-secondary)", fontStyle: "italic" }}>
+                {/* Initial starting description */}
+                <div style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "15px", marginBottom: "20px" }}>
+                  <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "4px" }}>Introducción histórica / Trasfondo:</p>
+                  <p style={{ fontSize: "1.05rem", color: "var(--text-secondary)", fontStyle: "italic", lineHeight: "1.6" }}>
                     {currentCampaign.character.backstory}
                   </p>
                 </div>
 
+                {/* ChatGPT Styled Dialog Log */}
                 {currentCampaign.log.map((turn, i) => (
-                  <div key={i} className="animate-fade" style={{ borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "15px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", color: "var(--accent-primary)", marginBottom: "6px", fontWeight: "600" }}>
-                      <span>👤 {turn.action}</span>
-                      <span>Turno: {turn.turnNum || 0} | 📅 {turn.date}</span>
+                  <div key={i} style={{ width: "100%", display: "flex", flexDirection: "column", gap: "10px", marginBottom: "15px" }}>
+                    
+                    {/* User Action Bubble */}
+                    <div className="chat-bubble user-bubble">
+                      <div className="user-bubble-content">
+                        <strong>Tú:</strong> {turn.action}
+                      </div>
                     </div>
 
-                    <div style={{ background: "rgba(0,0,0,0.15)", padding: "6px 12px", borderRadius: "6px", fontSize: "0.85rem", fontFamily: "monospace", borderLeft: "3px solid var(--accent-secondary)", marginBottom: "8px", color: "var(--text-secondary)" }}>
-                      {turn.textRoll}
+                    {/* Centered Roll Badge */}
+                    <div style={{ display: "flex", justifyContent: "flex-start", paddingLeft: "10px" }}>
+                      <span style={{ background: "rgba(0,0,0,0.18)", padding: "4px 10px", borderRadius: "6px", fontSize: "0.8rem", fontFamily: "monospace", borderLeft: "3px solid var(--accent-secondary)", color: "var(--text-secondary)" }}>
+                        {turn.textRoll}
+                      </span>
                     </div>
 
-                    <p style={{ fontSize: "0.95rem", lineHeight: "1.6", color: "var(--text-primary)", whiteSpace: "pre-line" }}>
-                      {turn.narrative}
-                    </p>
+                    {/* Master Response Bubble */}
+                    <div className="chat-bubble master-bubble">
+                      <div className="master-bubble-content">
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", borderBottom: "1px solid rgba(255,255,255,0.04)", paddingBottom: "4px" }}>
+                          <strong style={{ color: "var(--accent-primary)", fontSize: "0.85rem" }}>🔮 MASTER (Turno {turn.turnNum || 0})</strong>
+                          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>📅 {turn.date}</span>
+                        </div>
+                        <p style={{ fontSize: "1.05rem", lineHeight: "1.65", color: "var(--text-primary)", whiteSpace: "pre-line" }}>
+                          {turn.narrative}
+                        </p>
+                      </div>
+                    </div>
+
                   </div>
                 ))}
 
@@ -1919,17 +1953,23 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 )}
 
                 {!isRolling && currentCampaign.log.length === 0 && (
-                  <div className="animate-fade">
-                    <p style={{ fontSize: "1rem", lineHeight: "1.6", color: "var(--text-primary)" }}>
-                      {currentCampaign.narrative}
-                    </p>
+                  <div className="chat-bubble master-bubble">
+                    <div className="master-bubble-content">
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", borderBottom: "1px solid rgba(255,255,255,0.04)", paddingBottom: "4px" }}>
+                        <strong style={{ color: "var(--accent-primary)", fontSize: "0.85rem" }}>🔮 MASTER</strong>
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>📅 {currentCampaign.temporal.date}</span>
+                      </div>
+                      <p style={{ fontSize: "1.05rem", lineHeight: "1.65", color: "var(--text-primary)" }}>
+                        {currentCampaign.narrative}
+                      </p>
+                    </div>
                   </div>
                 )}
 
                 {isLlmLoading && !isRolling && (
                   <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px", background: "rgba(255,255,255,0.02)", borderRadius: "6px" }}>
                     <span style={{ fontSize: "0.9rem" }}>✍️</span>
-                    <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>GPT-4o está narrando el destino...</span>
+                    <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>El Master está narrando en ChatGPT...</span>
                   </div>
                 )}
 
@@ -1939,7 +1979,6 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
               {/* Action Selection Board */}
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 
-                {/* Suggested actions (disabled in Master Query mode) */}
                 {!isQueryMode && (
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                     {currentCampaign.suggestedActions.map((action, idx) => (
@@ -1966,56 +2005,52 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                   </div>
                 )}
 
-                {/* Input area + Mode toggle */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <div style={{ display: "flex", gap: "8px" }}>
-                    <input 
-                      type="text" 
-                      value={customAction}
-                      onChange={(e) => setCustomAction(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleAction(customAction)}
-                      placeholder={isQueryMode ? "Consulta tu duda al Master directamente..." : "Escribe tu propia acción personalizada aquí..."}
-                      disabled={isLlmLoading}
-                      style={{ flexGrow: 1 }}
-                    />
-                    <button 
-                      onClick={() => handleAction(customAction)}
-                      disabled={isLlmLoading || !customAction.trim()}
-                      style={{ 
-                        padding: "10px 20px", 
-                        background: "var(--accent-gradient)", 
-                        color: "#fff", 
-                        border: "none", 
-                        borderRadius: "6px", 
-                        cursor: isLlmLoading ? "not-allowed" : "pointer",
-                        fontWeight: "700" 
-                      }}
-                    >
-                      {isQueryMode ? "Preguntar" : "➔"}
-                    </button>
-                  </div>
-                  
-                  {/* Master query checkbox */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", paddingLeft: "4px" }}>
-                    <input 
-                      type="checkbox" 
-                      id="queryCheckbox"
-                      checked={isQueryMode}
-                      onChange={(e) => setIsQueryMode(e.target.checked)}
-                      style={{ cursor: "pointer", width: "16px", height: "16px" }}
-                    />
-                    <label htmlFor="queryCheckbox" style={{ fontSize: "0.8rem", color: "var(--text-secondary)", cursor: "pointer", userSelect: "none" }}>
-                      💡 <strong>Consulta al Master</strong> (Preguntas descriptivas: no consume turno, fatiga, hambre ni lanza dados)
-                    </label>
-                  </div>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <input 
+                    type="text" 
+                    value={customAction}
+                    onChange={(e) => setCustomAction(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleAction(customAction)}
+                    placeholder={isQueryMode ? "Consulta tu duda al Master directamente..." : "Escribe tu propia acción personalizada aquí..."}
+                    disabled={isLlmLoading}
+                    style={{ flexGrow: 1 }}
+                  />
+                  <button 
+                    onClick={() => handleAction(customAction)}
+                    disabled={isLlmLoading || !customAction.trim()}
+                    style={{ 
+                      padding: "10px 20px", 
+                      background: "var(--accent-gradient)", 
+                      color: "#fff", 
+                      border: "none", 
+                      borderRadius: "6px", 
+                      cursor: isLlmLoading ? "not-allowed" : "pointer",
+                      fontWeight: "700" 
+                    }}
+                  >
+                    {isQueryMode ? "Preguntar" : "➔"}
+                  </button>
+                </div>
+                
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", paddingLeft: "4px" }}>
+                  <input 
+                    type="checkbox" 
+                    id="queryCheckbox"
+                    checked={isQueryMode}
+                    onChange={(e) => setIsQueryMode(e.target.checked)}
+                    style={{ cursor: "pointer", width: "16px", height: "16px" }}
+                  />
+                  <label htmlFor="queryCheckbox" style={{ fontSize: "0.8rem", color: "var(--text-secondary)", cursor: "pointer", userSelect: "none" }}>
+                    💡 <strong>Consulta al Master</strong> (Preguntas descriptivas: no consume turno, fatiga, hambre ni lanza dados)
+                  </label>
                 </div>
 
               </div>
 
             </div>
 
-            {/* Right Column: Stats HUD & Tabs Panel */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+            {/* Right Column: Collapsible Sidebar */}
+            <div className={`sidebar-panel ${!isSidebarOpen ? "collapsed" : ""}`}>
               
               {/* Stats HUD Panel */}
               <div className="glass-panel" style={{ padding: "15px", display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -2103,7 +2138,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
               </div>
 
               {/* Tab Display Panel */}
-              <div className="glass-panel" style={{ height: "230px", overflowY: "auto", padding: "15px" }}>
+              <div className="glass-panel" style={{ height: "355px", overflowY: "auto", padding: "15px" }}>
                 
                 {/* T1: PERSONAJE */}
                 {activeTab === "personaje" && (
@@ -2134,7 +2169,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                         ) : (
                           currentCampaign.character.skills.map((s, idx) => (
                             <span key={idx} style={{ fontSize: "0.75rem", background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", padding: "2px 8px", borderRadius: "12px", color: "var(--accent-primary)" }}>
-                              {s.name} nv{s.level} (max +4)
+                              {s.name} nv{s.level}
                             </span>
                           ))
                         )}
@@ -2182,7 +2217,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                         setCurrentCampaign(updated);
                       }}
                       onBlur={() => saveCampaignState(currentCampaign)}
-                      rows="6"
+                      rows="10"
                       style={{ width: "100%", fontSize: "0.85rem", lineHeight: "1.4", background: "rgba(0,0,0,0.1)" }}
                     />
                   </div>
@@ -2213,11 +2248,9 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                   </div>
                 )}
 
-                {/* T4: PATRIMONIO (Wealth & Estates tab) */}
+                {/* T4: PATRIMONIO */}
                 {activeTab === "patrimonio" && (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
-                    
-                    {/* Financial stats summary list */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
                     <div>
                       <h4 style={{ fontSize: "0.8rem", color: "var(--text-secondary)", borderBottom: "1px solid var(--card-border)", paddingBottom: "2px", marginBottom: "8px" }}>Balance Financiero</h4>
                       <ul style={{ listStyle: "none", fontSize: "0.8rem", display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -2240,7 +2273,6 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                       </ul>
                     </div>
 
-                    {/* Properties & Businesses lists */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                       <div>
                         <h4 style={{ fontSize: "0.8rem", color: "var(--text-secondary)", borderBottom: "1px solid var(--card-border)", paddingBottom: "2px", marginBottom: "4px" }}>Propiedades</h4>
@@ -2408,7 +2440,6 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 <button onClick={() => setShowAdminPanel(false)} style={{ background: "transparent", border: "none", color: "var(--text-secondary)", cursor: "pointer" }}>✕</button>
               </div>
 
-              {/* Stats tweaks */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "10px", marginBottom: "15px" }}>
                 <div>
                   <label style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Salud:</label>
@@ -2480,7 +2511,6 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 </div>
               </div>
 
-              {/* Recurrent Finance tweaks */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "15px" }}>
                 <div>
                   <label style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Ingresos / Turno:</label>
@@ -2511,16 +2541,14 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 </div>
               </div>
 
-              {/* Estates: Add Property & Businesses */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px", marginBottom: "15px", borderTop: "1px dashed var(--card-border)", paddingTop: "12px" }}>
                 
-                {/* Properties manager */}
                 <div>
                   <h4 style={{ fontSize: "0.8rem", color: "var(--accent-primary)", marginBottom: "6px" }}>Añadir Propiedad</h4>
                   <div style={{ display: "flex", gap: "6px" }}>
                     <input 
                       type="text" 
-                      placeholder="Nombre (ej: Terreno)"
+                      placeholder="Nombre"
                       value={adminPropName}
                       onChange={(e) => setAdminPropName(e.target.value)}
                       style={{ padding: "4px 8px", fontSize: "0.8rem", flexGrow: 1 }}
@@ -2547,7 +2575,6 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                     </button>
                   </div>
 
-                  {/* Tiny properties remover list */}
                   <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "8px" }}>
                     {currentCampaign.wealth.properties && currentCampaign.wealth.properties.map((p, idx) => (
                       <div key={idx} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", background: "rgba(255,255,255,0.02)", padding: "2px" }}>
@@ -2566,13 +2593,12 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                   </div>
                 </div>
 
-                {/* Businesses manager */}
                 <div>
                   <h4 style={{ fontSize: "0.8rem", color: "var(--accent-primary)", marginBottom: "6px" }}>Añadir Negocio</h4>
                   <div style={{ display: "flex", gap: "6px" }}>
                     <input 
                       type="text" 
-                      placeholder="Nombre (ej: Tienda)"
+                      placeholder="Nombre"
                       value={adminBizName}
                       onChange={(e) => setAdminBizName(e.target.value)}
                       style={{ padding: "4px 8px", fontSize: "0.8rem", flexGrow: 1 }}
@@ -2599,7 +2625,6 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                     </button>
                   </div>
 
-                  {/* Tiny businesses remover list */}
                   <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "8px" }}>
                     {currentCampaign.wealth.businesses && currentCampaign.wealth.businesses.map((b, idx) => (
                       <div key={idx} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", background: "rgba(255,255,255,0.02)", padding: "2px" }}>
@@ -2620,7 +2645,6 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
 
               </div>
 
-              {/* Fast inventory modification */}
               <div style={{ display: "flex", gap: "10px", alignItems: "flex-end", borderTop: "1px dashed var(--card-border)", paddingTop: "12px" }}>
                 <div style={{ flexGrow: 1 }}>
                   <label style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Añadir Objeto al Inventario:</label>
