@@ -1313,13 +1313,13 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                     </p>
 
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px" }}>
-                      <span style={{ fontSize: "0.75rem", background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: "12px", border: "1px solid var(--card-border)", color: "var(--text-secondary)" }}>
+                      <span style={{ fontSize: "0.75rem", background: "var(--panel-bg-hover)", padding: "2px 8px", borderRadius: "12px", border: "1px solid var(--card-border)", color: "var(--text-secondary)" }}>
                         Turno: {c.turn || 0}
                       </span>
-                      <span style={{ fontSize: "0.75rem", background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: "12px", border: "1px solid var(--card-border)", color: "var(--text-secondary)" }}>
+                      <span style={{ fontSize: "0.75rem", background: "var(--panel-bg-hover)", padding: "2px 8px", borderRadius: "12px", border: "1px solid var(--card-border)", color: "var(--text-secondary)" }}>
                         Dificultad: {c.difficulty.toUpperCase()}
                       </span>
-                      <span style={{ fontSize: "0.75rem", background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: "12px", border: "1px solid var(--card-border)", color: "var(--text-secondary)" }}>
+                      <span style={{ fontSize: "0.75rem", background: "var(--panel-bg-hover)", padding: "2px 8px", borderRadius: "12px", border: "1px solid var(--card-border)", color: "var(--text-secondary)" }}>
                         📅 {c.temporal.date}
                       </span>
                     </div>
@@ -1372,11 +1372,21 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
 
       {/* 2. CONFIGURATION & SETTINGS */}
       {currentScreen === "settings" && (
-        <div className="animate-fade" style={{ maxWidth: "600px", margin: "40px auto" }}>
+        <div className="animate-fade" style={{ maxWidth: "700px", margin: "0 auto" }}>
+          <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px", borderBottom: "1px solid var(--card-border)", paddingBottom: "15px" }}>
+            <h1 style={{ fontFamily: "var(--font-title)", fontSize: "1.8rem", fontWeight: "800", background: "var(--accent-gradient)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              ⚙️ Ajustes del Motor
+            </h1>
+            <button 
+              onClick={() => setTheme(prev => prev === "dark" ? "light" : "dark")}
+              className="glass-panel"
+              style={{ padding: "8px 12px", cursor: "pointer", fontSize: "1.1rem" }}
+              title="Cambiar Modo Día / Noche"
+            >
+              {theme === "dark" ? "☀️ Día" : "🌙 Noche"}
+            </button>
+          </header>
           <div className="glass-panel" style={{ padding: "30px" }}>
-            <h2 style={{ fontFamily: "var(--font-title)", fontSize: "1.5rem", marginBottom: "25px", background: "var(--accent-gradient)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              ⚙️ Configuración del Motor
-            </h2>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "20px", marginBottom: "30px" }}>
               <div>
@@ -1442,17 +1452,26 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
 
       {/* 3. WIZARD CREATION */}
       {currentScreen === "create" && (
-        <div className="animate-fade" style={{ maxWidth: "700px", margin: "20px auto" }}>
-          <div className="glass-panel" style={{ padding: "30px" }}>
-            
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "25px", borderBottom: "1px solid var(--card-border)", paddingBottom: "15px" }}>
-              <h2 style={{ fontFamily: "var(--font-title)", fontSize: "1.4rem", fontWeight: "700" }}>
-                {heritageSource ? "📜 Continuar Linaje (Heredar)" : "🧙‍♂️ Crear Nuevo Personaje"}
-              </h2>
+        <div className="animate-fade" style={{ maxWidth: "700px", margin: "0 auto" }}>
+          <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px", borderBottom: "1px solid var(--card-border)", paddingBottom: "15px" }}>
+            <h1 style={{ fontFamily: "var(--font-title)", fontSize: "1.8rem", fontWeight: "800", background: "var(--accent-gradient)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              {heritageSource ? "📜 Continuar Linaje" : "🧙‍♂️ Creación"}
+            </h1>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <button 
+                onClick={() => setTheme(prev => prev === "dark" ? "light" : "dark")}
+                className="glass-panel"
+                style={{ padding: "8px 12px", cursor: "pointer", fontSize: "1.1rem" }}
+                title="Cambiar Modo Día / Noche"
+              >
+                {theme === "dark" ? "☀️ Día" : "🌙 Noche"}
+              </button>
               <span style={{ fontSize: "0.9rem", color: "var(--accent-primary)", fontWeight: "600" }}>
                 Paso {wizardStep} de {wizardWorld === "history" ? 6 : 5}
               </span>
             </div>
+          </header>
+          <div className="glass-panel" style={{ padding: "30px" }}>
 
             {/* STEP 1 */}
             {wizardStep === 1 && (
@@ -1666,14 +1685,14 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                           <button 
                             onClick={() => handleAttrChange(attr, -1)}
-                            style={{ width: "26px", height: "26px", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.05)", border: "1px solid var(--card-border)", cursor: "pointer", borderRadius: "50%", color: "var(--text-primary)" }}
+                            style={{ width: "26px", height: "26px", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--panel-bg-hover)", border: "1px solid var(--card-border)", cursor: "pointer", borderRadius: "50%", color: "var(--text-primary)" }}
                           >
                             -
                           </button>
                           <span style={{ fontWeight: "600", width: "20px", textAlign: "center", color: "var(--text-primary)" }}>{wizardAttrs[attr]}</span>
                           <button 
                             onClick={() => handleAttrChange(attr, 1)}
-                            style={{ width: "26px", height: "26px", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.05)", border: "1px solid var(--card-border)", cursor: "pointer", borderRadius: "50%", color: "var(--text-primary)" }}
+                            style={{ width: "26px", height: "26px", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--panel-bg-hover)", border: "1px solid var(--card-border)", cursor: "pointer", borderRadius: "50%", color: "var(--text-primary)" }}
                           >
                             +
                           </button>
@@ -1915,7 +1934,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 }}
               >
                 {/* Initial starting description */}
-                <div style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "15px", marginBottom: "20px" }}>
+                <div style={{ borderBottom: "1px solid var(--border-subtle)", paddingBottom: "15px", marginBottom: "20px" }}>
                   <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "4px" }}>Introducción histórica / Trasfondo:</p>
                   <p style={{ fontSize: "1.05rem", color: "var(--text-secondary)", fontStyle: "italic", lineHeight: "1.6" }}>
                     {currentCampaign.character.backstory}
@@ -1935,7 +1954,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
 
                     {/* Centered Roll Badge */}
                     <div style={{ display: "flex", justifyContent: "flex-start", paddingLeft: "10px" }}>
-                      <span style={{ background: "rgba(0,0,0,0.18)", padding: "4px 10px", borderRadius: "6px", fontSize: "0.8rem", fontFamily: "monospace", borderLeft: "3px solid var(--accent-secondary)", color: "var(--text-secondary)" }}>
+                      <span style={{ background: "var(--panel-bg-darker)", padding: "4px 10px", borderRadius: "6px", fontSize: "0.8rem", fontFamily: "monospace", borderLeft: "3px solid var(--accent-secondary)", color: "var(--text-secondary)" }}>
                         {turn.textRoll}
                       </span>
                     </div>
@@ -2073,7 +2092,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                     <span style={{ color: "var(--color-health)" }}>❤️ Salud</span>
                     <span style={{ color: "var(--text-primary)" }}>{currentCampaign.physical.health}/100</span>
                   </div>
-                  <div style={{ background: "rgba(255,255,255,0.05)", height: "8px", borderRadius: "4px", overflow: "hidden" }}>
+                  <div style={{ background: "var(--panel-bg-hover)", height: "8px", borderRadius: "4px", overflow: "hidden" }}>
                     <div style={{ width: `${currentCampaign.physical.health}%`, background: "var(--color-health)", height: "100%", transition: "width 0.4s ease" }} />
                   </div>
                   {currentCampaign.physical.health < 50 && (
@@ -2088,7 +2107,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                     <span style={{ color: "var(--color-fatigue)" }}>⚡ Fatiga</span>
                     <span style={{ color: "var(--text-primary)" }}>{currentCampaign.physical.fatigue}/100</span>
                   </div>
-                  <div style={{ background: "rgba(255,255,255,0.05)", height: "8px", borderRadius: "4px", overflow: "hidden" }}>
+                  <div style={{ background: "var(--panel-bg-hover)", height: "8px", borderRadius: "4px", overflow: "hidden" }}>
                     <div style={{ width: `${currentCampaign.physical.fatigue}%`, background: "var(--color-fatigue)", height: "100%", transition: "width 0.4s ease" }} />
                   </div>
                   {currentCampaign.physical.fatigue > 45 && (
@@ -2103,7 +2122,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                     <span style={{ color: "var(--color-hunger)" }}>🍖 Hambre</span>
                     <span style={{ color: "var(--text-primary)" }}>{currentCampaign.physical.hunger}/100</span>
                   </div>
-                  <div style={{ background: "rgba(255,255,255,0.05)", height: "8px", borderRadius: "4px", overflow: "hidden" }}>
+                  <div style={{ background: "var(--panel-bg-hover)", height: "8px", borderRadius: "4px", overflow: "hidden" }}>
                     <div style={{ width: `${currentCampaign.physical.hunger}%`, background: "var(--color-hunger)", height: "100%", transition: "width 0.4s ease" }} />
                   </div>
                   {currentCampaign.physical.hunger > 80 && (
@@ -2156,7 +2175,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 {/* T1: PERSONAJE */}
                 {activeTab === "personaje" && (
                   <div>
-                    <h3 style={{ fontSize: "0.9rem", color: "var(--text-secondary)", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "4px", marginBottom: "10px" }}>
+                    <h3 style={{ fontSize: "0.9rem", color: "var(--text-secondary)", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "4px", marginBottom: "10px" }}>
                       Ficha de Personaje (Edad: {currentCampaign.character.age} años)
                     </h3>
                     
@@ -2165,7 +2184,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                         const val = currentCampaign.character.attrs[attr];
                         const mod = Math.floor((val - 10) / 2);
                         return (
-                          <div key={attr} style={{ background: "rgba(255,255,255,0.03)", padding: "6px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                          <div key={attr} style={{ background: "var(--panel-bg-subtle)", padding: "6px", borderRadius: "6px", border: "1px solid var(--border-subtle)" }}>
                             <span style={{ fontSize: "0.65rem", textTransform: "uppercase", color: "var(--text-muted)", display: "block" }}>{attr.substring(0, 3)}</span>
                             <span style={{ fontSize: "0.9rem", fontWeight: "700", display: "block", color: "var(--text-primary)" }}>{val}</span>
                             <span style={{ fontSize: "0.7rem", color: "var(--accent-primary)" }}>{mod >= 0 ? `+${mod}` : mod}</span>
@@ -2193,7 +2212,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                       <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "block", marginBottom: "4px" }}>Rasgos:</span>
                       <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
                         {currentCampaign.character.traits.map((t, idx) => (
-                          <span key={idx} style={{ fontSize: "0.75rem", background: "rgba(255,255,255,0.05)", border: "1px solid var(--card-border)", padding: "2px 8px", borderRadius: "12px", color: "var(--text-primary)" }}>
+                          <span key={idx} style={{ fontSize: "0.75rem", background: "var(--panel-bg-hover)", border: "1px solid var(--card-border)", padding: "2px 8px", borderRadius: "12px", color: "var(--text-primary)" }}>
                             {t}
                           </span>
                         ))}
@@ -2231,7 +2250,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                       }}
                       onBlur={() => saveCampaignState(currentCampaign)}
                       rows="10"
-                      style={{ width: "100%", fontSize: "0.85rem", lineHeight: "1.4", background: "rgba(0,0,0,0.1)" }}
+                      style={{ width: "100%", fontSize: "0.85rem", lineHeight: "1.4", background: "var(--input-bg)" }}
                     />
                   </div>
                 )}
@@ -2392,7 +2411,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                             
                             <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px" }}>
                               <span style={{ fontSize: "0.65rem", color: "var(--text-secondary)" }}>Relación:</span>
-                              <div style={{ flexGrow: 1, background: "rgba(255,255,255,0.05)", height: "4px", borderRadius: "2px", overflow: "hidden" }}>
+                              <div style={{ flexGrow: 1, background: "var(--panel-bg-hover)", height: "4px", borderRadius: "2px", overflow: "hidden" }}>
                                 <div style={{ width: `${(npc.relation + 100) / 2}%`, background: npc.relation >= 0 ? "var(--color-hunger)" : "var(--color-fail)", height: "100%" }} />
                               </div>
                               <span style={{ fontSize: "0.65rem", fontWeight: "600", color: "var(--text-primary)" }}>{npc.relation >= 0 ? `+${npc.relation}` : npc.relation}</span>
@@ -2698,16 +2717,29 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
 
       {/* 6. CHARACTER DEATH SCREEN */}
       {currentScreen === "dead" && currentCampaign && (
-        <div className="animate-fade" style={{ maxWidth: "600px", margin: "40px auto", textAlign: "center" }}>
-          <div className="glass-panel" style={{ padding: "40px", border: "1px solid var(--color-fail)" }}>
+        <div className="animate-fade" style={{ maxWidth: "600px", margin: "0 auto" }}>
+          <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px", borderBottom: "1px solid var(--card-border)", paddingBottom: "15px" }}>
+            <h1 style={{ fontFamily: "var(--font-title)", fontSize: "1.8rem", fontWeight: "800", color: "var(--color-fail)" }}>
+              💀 El Fin de una Era
+            </h1>
+            <button 
+              onClick={() => setTheme(prev => prev === "dark" ? "light" : "dark")}
+              className="glass-panel"
+              style={{ padding: "8px 12px", cursor: "pointer", fontSize: "1.1rem" }}
+              title="Cambiar Modo Día / Noche"
+            >
+              {theme === "dark" ? "☀️ Día" : "🌙 Noche"}
+            </button>
+          </header>
+          <div className="glass-panel" style={{ padding: "40px", border: "1px solid var(--color-fail)", textAlign: "center" }}>
             <span style={{ fontSize: "4rem", display: "block", marginBottom: "15px" }}>💀</span>
             <h1 style={{ fontFamily: "var(--font-title)", fontSize: "1.8rem", color: "var(--color-fail)", fontWeight: "800", marginBottom: "15px" }}>
               LA HISTORIA HA TERMINADO
             </h1>
             
-            <div style={{ background: "rgba(0,0,0,0.3)", padding: "20px", borderRadius: "8px", border: "1px solid var(--card-border)", marginBottom: "25px", textAlign: "left" }}>
+            <div style={{ background: "var(--panel-bg-darker)", padding: "20px", borderRadius: "8px", border: "1px solid var(--card-border)", marginBottom: "25px", textAlign: "left" }}>
               <h3 style={{ fontSize: "0.95rem", color: "var(--text-secondary)", marginBottom: "8px", fontWeight: "600" }}>Causa de la muerte:</h3>
-              <p style={{ fontSize: "0.95rem", lineHeight: "1.5", color: "#fff" }}>
+              <p style={{ fontSize: "0.95rem", lineHeight: "1.5", color: "var(--text-primary)" }}>
                 {currentCampaign.narrative}
               </p>
             </div>
