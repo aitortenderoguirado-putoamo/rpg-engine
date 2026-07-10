@@ -797,23 +797,7 @@ export default function App() {
     // 1. Increment Turn Counter
     nextCampaign.turn = (nextCampaign.turn || 0) + 1;
 
-    // 2. Apply Turn Stat Ticks
-    const diff = DIFFICULTIES.find(d => d.id === nextCampaign.difficulty) || DIFFICULTIES[1];
-    let turnHungerRate = 10;
-    let turnFatigueRate = 12;
-    if (diff.id === "easy") { turnHungerRate = 5; turnFatigueRate = 8; }
-    else if (diff.id === "hard") { turnHungerRate = 18; turnFatigueRate = 20; }
-    else if (diff.id === "legend") { turnHungerRate = 25; turnFatigueRate = 28; }
-
-    nextCampaign.physical.hunger = Math.min(nextCampaign.physical.hunger + turnHungerRate, 100);
-    nextCampaign.physical.fatigue = Math.min(nextCampaign.physical.fatigue + turnFatigueRate, 100);
-
-    let hungerDamage = 0;
-    if (nextCampaign.physical.hunger > 80) {
-      hungerDamage = 10;
-      nextCampaign.physical.health = Math.max(nextCampaign.physical.health - hungerDamage, 0);
-    }
-
+    // 2. Apply Recurrent Financial Income/Expenses (per turn)
     if (nextCampaign.wealth) {
       nextCampaign.wealth.money = Math.max(0, nextCampaign.wealth.money + (nextCampaign.wealth.income || 0) - (nextCampaign.wealth.expenses || 0));
     }
@@ -822,7 +806,7 @@ export default function App() {
       setIsRolling(false);
       setIsLlmLoading(false);
       nextCampaign.character.status = "Muerto";
-      nextCampaign.narrative = `Has sucumbido a la desnutrición extrema. Tu cuerpo colapsó en mitad del camino.`;
+      nextCampaign.narrative = `Has sucumbido a tus heridas previas. Tu cuerpo no pudo resistir más.`;
       saveCampaignState(nextCampaign);
       setCurrentCampaign(nextCampaign);
       setCurrentScreen("dead");
@@ -869,13 +853,13 @@ ${nextCampaign.memory.keyEvents.slice(-20).map((e, i) => `- [${e.date}] ${e.desc
       return `Turno ${turn.turnNum || index} [${turn.date}]: Acción: "${turn.action}"\nTirada: ${turn.textRoll}\nResultado: ${turn.narrative}`;
     }).join("\n\n");
 
-    // ENHANCED SYSTEM PROMPT: Instructs GPT-4o to output extensive literary description (3-4 paragraphs)
+    // SYSTEM PROMPT: Instructs GPT-4o to calculate PROPORTIONAL hunger and fatigue consumption based on the action
     const systemPrompt = `Eres el Master de un juego de rol narrativo y simulación. Tu objetivo es narrar el resultado de la acción del jugador de forma inmersiva, reactiva y consistente con las reglas físicas, económicas y narrativas del mundo.
 
 ESTILO NARRATIVO REQUERIDO (ESTILO CHATGPT RPG LARGO):
 - Debes escribir con un estilo literario sumamente descriptivo, inmersivo, rico y detallado, exactamente igual a una partida de rol clásica y profunda en ChatGPT.
 - Cada respuesta narrativa debe ser extensa (entre 3 y 4 párrafos completos, largos y descriptivos).
-- Describe minuciosamente el entorno, los sonidos, los olores, la atmósfera, los diálogos de los personajes, las sensaciones físicas e internas del héroe, y las consecuencias físicas y psicológicas de la acción del jugador basándote en la tirada de dados indicada.
+- Describe minuciosamente el entorno, los sonidos, los olores, la atmósfera, los diálogos de los personajes, las sensaciones físicas e internas del héroe, y las consecuencias de la acción basándote en la tirada de dados indicada.
 - Evita por completo respuestas cortas, resúmenes escuetos o descripciones rápidas.
 
 Mundo: ${nextCampaign.campaign.world} ${nextCampaign.campaign.worldDesc ? `(${nextCampaign.campaign.worldDesc})` : ""}
@@ -883,15 +867,25 @@ Región: ${nextCampaign.campaign.region || "N/A"}
 Dificultad: ${nextCampaign.difficulty} (DC Tiradas: ${rollInfo.dc})
 Escala Temporal: ${nextCampaign.timeScale}
 
-REGLAS DE SIMULACIÓN IMPORTANTES:
-1. El jugador tiene estadísticas físicas y financieras. Debes devolver cambios específicos en ellas según la narrativa.
-2. Si el jugador realiza transacciones comerciales, debes incluir precios numéricos explícitos en la narrativa y reflejar los cambios en el JSON (inventoryAdd, inventoryConsume, wealth.money).
-3. Progreso de Habilidades: Si la acción del jugador fue un éxito usando una habilidad, puedes subir su nivel añadiendo su nombre a "skillsImproved".
-4. PNJs: Si el jugador interactúa con personajes, puedes añadirlos o actualizarlos en "npcUpdates".
-5. Si ocurre un evento histórico o hito de la campaña, agrégalo a "keyEventToAdd" (diario de eventos).
-6. Si la salud del personaje llega a 0, pon "isDead" en true y explica cómo murió en "deathMessage".
-7. Patrimonio y Finanzas: Puedes añadir o quitar propiedades en "propertiesAdd" / "propertiesRemove" y negocios en "businessesAdd" / "businessesRemove" si la narrativa lo justifica.
-8. Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
+REGLAS DE SIMULACIÓN DE ESTADÍSTICAS FÍSICAS (PROPORCIONALES):
+El hambre (hunger) y el cansancio/fatiga (fatigue) ya no suben por un ratio fijo por turno. TÚ debes determinar el impacto físico exacto de la acción del jugador en sus estadísticas físicas, devolviéndolo en el objeto "changes.physical" del JSON.
+Sé coherente y proporcional al esfuerzo físico e intelectual de la acción:
+- Acciones pasivas, dialogar, investigar con calma, comprar: Hambre +1 a +3, Fatiga +1 a +3 (bajo consumo).
+- Acciones intensas como combatir, correr a toda velocidad, cavar, viajar largas distancias a pie: Hambre +8 a +18, Fatiga +12 a +25 (alto consumo).
+- Acciones extremas como escalar montañas sin equipo, marchar todo el día sin pausa: Hambre +20 a +35, Fatiga +25 a +45.
+- Comer comida o raciones: Hambre negativo (ej: -20 a -45).
+- Dormir en una cama, descansar profundamente: Fatiga negativa (ej: -40 a -80), Hambre ligeramente aumentado (+3 a +6 por el transcurso de horas).
+- Recibir heridas físicas severas: Quita Salud ("health": -10 a -35).
+Escala todos estos valores según la dificultad seleccionada (${nextCampaign.difficulty}): fácil (reducido), medio (estándar), difícil (severo), leyenda (daño mortal y consumo extremo).
+
+OTRAS REGLAS DE SIMULACIÓN:
+1. Si el jugador realiza transacciones comerciales, debes incluir precios numéricos explícitos en la narrativa y reflejar los cambios en el JSON (inventoryAdd, inventoryConsume, wealth.money).
+2. Progreso de Habilidades: Si la acción del jugador fue un éxito usando una habilidad, puedes subir su nivel añadiendo su nombre a "skillsImproved".
+3. PNJs: Si el jugador interactúa con personajes, puedes añadirlos o actualizarlos en "npcUpdates".
+4. Si ocurre un evento histórico o hito de la campaña, agrégalo a "keyEventToAdd" (diario de eventos).
+5. Si la salud del personaje llega a 0, pon "isDead" en true y explica cómo murió en "deathMessage".
+6. Patrimonio y Finanzas: Puedes añadir o quitar propiedades en "propertiesAdd" / "propertiesRemove" y negocios en "businessesAdd" / "businessesRemove" si la narrativa lo justifica.
+7. Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
 {
   "narrative": "Tu narración literaria extendida (3-4 párrafos extensos y ricos en prosa) sobre el desenlace de la acción basándote en la tirada de dados.",
   "suggestedActions": ["Acción 1", "Acción 2", "Acción 3", "Acción 4"],
@@ -973,6 +967,12 @@ Genera el JSON de respuesta con el desenlace narrativo literario y extenso.`;
           nextCampaign.physical.fatigue = Math.max(0, Math.min(100, nextCampaign.physical.fatigue + (changes.physical.fatigue || 0)));
           nextCampaign.physical.hunger = Math.max(0, Math.min(100, nextCampaign.physical.hunger + (changes.physical.hunger || 0)));
           nextCampaign.physical.mental = Math.max(0, Math.min(100, nextCampaign.physical.mental + (changes.physical.mental || 0)));
+
+          // Apply starvation damage if hunger exceeds 80% post-action
+          if (nextCampaign.physical.hunger > 80) {
+            const starvationDamage = nextCampaign.difficulty === "easy" ? 5 : nextCampaign.difficulty === "hard" ? 15 : nextCampaign.difficulty === "legend" ? 22 : 10;
+            nextCampaign.physical.health = Math.max(0, nextCampaign.physical.health - starvationDamage);
+          }
         }
 
         if (changes.wealth) {
