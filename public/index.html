@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0c0c0e" />
+  <meta name="description" content="Motor RPG Persistente — Un juego de rol de simulación narrativa persistente." />
+  <title>Motor RPG Persistente</title>
+  
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* Reset & Theme Variables */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    :root {
+      --bg-color: #08080a;
+      --bg-gradient: radial-gradient(circle at 50% 50%, #121016 0%, #08080a 100%);
+      --card-bg: rgba(18, 18, 24, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-border-hover: rgba(168, 85, 247, 0.4);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      
+      --accent-primary: #a855f7;
+      --accent-secondary: #6366f1;
+      --accent-gradient: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+      --accent-glow: 0 0 20px rgba(168, 85, 247, 0.35);
+      
+      --color-health: #f43f5e;
+      --color-fatigue: #f59e0b;
+      --color-hunger: #10b981;
+      --color-money: #eab308;
+      --color-mental: #06b6d4;
+      
+      --color-success: #10b981;
+      --color-fail: #ef4444;
+      --color-crit: #3b82f6;
+      --color-botch: #d946ef;
+      
+      --font-title: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.5);
+      --shadow-md: 0 8px 24px rgba(0,0,0,0.6);
+      --shadow-glow: 0 0 15px rgba(168, 85, 247, 0.2);
+    }
+    
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-color);
+      background-image: var(--bg-gradient);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+    }
+    
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(8, 8, 10, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(168, 85, 247, 0.3);
+    }
+    
+    /* Global Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes diceRoll {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.2); filter: drop-shadow(0 0 15px var(--accent-primary)); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+    
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 5px rgba(168, 85, 247, 0.2); }
+      50% { box-shadow: 0 0 20px rgba(168, 85, 247, 0.5); }
+      100% { box-shadow: 0 0 5px rgba(168, 85, 247, 0.2); }
+    }
+    
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+      100% { transform: translateY(0px); }
+    }
+
+    .animate-fade {
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    
+    .animate-dice {
+      animation: diceRoll 0.6s ease-out;
+    }
+
+    .animate-float {
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    /* Glassmorphism helpers */
+    .glass-panel {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      box-shadow: var(--shadow-md);
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    
+    .glass-panel:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+    
+    /* Input & Button Base resets for nice look */
+    input, textarea, select {
+      background: rgba(8, 8, 10, 0.6);
+      border: 1px solid var(--card-border);
+      color: var(--text-primary);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-family: var(--font-body);
+      transition: all 0.2s ease;
+    }
+    
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+</body>
+</html>
