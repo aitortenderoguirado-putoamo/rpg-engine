@@ -1396,7 +1396,11 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 <input 
                   type="password" 
                   value={apiKey} 
-                  onChange={(e) => setApiKey(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setApiKey(val);
+                    localStorage.setItem("openai_api_key", val);
+                  }}
                   placeholder="sk-proj-..."
                   style={{ width: "100%" }}
                 />
@@ -1412,7 +1416,11 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 <input 
                   type="text" 
                   value={supabaseUrl} 
-                  onChange={(e) => setSupabaseUrl(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSupabaseUrl(val);
+                    localStorage.setItem("supabase_url", val);
+                  }}
                   placeholder="https://your-project.supabase.co"
                   style={{ width: "100%" }}
                 />
@@ -1425,7 +1433,11 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 <input 
                   type="password" 
                   value={supabaseKey} 
-                  onChange={(e) => setSupabaseKey(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSupabaseKey(val);
+                    localStorage.setItem("supabase_key", val);
+                  }}
                   placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX..."
                   style={{ width: "100%" }}
                 />
@@ -2011,71 +2023,113 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
               {/* Action Selection Board */}
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 
-                {!isQueryMode && (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                    {currentCampaign.suggestedActions.map((action, idx) => (
+                {!apiKey ? (
+                  <div className="glass-panel" style={{ padding: "20px", border: "1px solid var(--accent-primary)", display: "flex", flexDirection: "column", gap: "12px", background: "rgba(168,85,247,0.03)", boxShadow: "var(--accent-glow)" }}>
+                    <span style={{ fontSize: "0.9rem", color: "var(--text-primary)", fontWeight: "700", display: "flex", alignItems: "center", gap: "8px" }}>
+                      🔑 Se requiere una OpenAI API Key para Jugar
+                    </span>
+                    <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                      Introduce tu clave de API (sk-proj-...) para habilitar la narrativa e imágenes. Se guardará localmente de forma segura en tu navegador.
+                    </p>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <input 
+                        type="password" 
+                        placeholder="sk-proj-..."
+                        style={{ flexGrow: 1 }}
+                        id="inlineApiKeyInput"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            const val = e.target.value.trim();
+                            if (val) {
+                              setApiKey(val);
+                              localStorage.setItem("openai_api_key", val);
+                            }
+                          }
+                        }}
+                      />
                       <button
-                        key={idx}
-                        onClick={() => handleAction(action)}
+                        onClick={() => {
+                          const val = document.getElementById("inlineApiKeyInput")?.value?.trim();
+                          if (val) {
+                            setApiKey(val);
+                            localStorage.setItem("openai_api_key", val);
+                          }
+                        }}
+                        style={{ padding: "10px 20px", background: "var(--accent-gradient)", color: "#fff", border: "none", borderRadius: "6px", fontWeight: "700", cursor: "pointer", boxShadow: "var(--accent-glow)" }}
+                      >
+                        Activar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {!isQueryMode && (
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                        {currentCampaign.suggestedActions.map((action, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleAction(action)}
+                            disabled={isLlmLoading}
+                            className="glass-panel"
+                            style={{ 
+                              padding: "12px", 
+                              cursor: isLlmLoading ? "not-allowed" : "pointer", 
+                              textAlign: "left", 
+                              fontSize: "0.85rem", 
+                              fontWeight: "500", 
+                              background: "rgba(168, 85, 247, 0.05)",
+                              border: "1px solid var(--card-border)",
+                              color: "var(--text-primary)"
+                            }}
+                          >
+                            <span style={{ color: "var(--accent-primary)", marginRight: "6px" }}>{idx+1}.</span>
+                            {action}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <input 
+                        type="text" 
+                        value={customAction}
+                        onChange={(e) => setCustomAction(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleAction(customAction)}
+                        placeholder={isQueryMode ? "Consulta tu duda al Master directamente..." : "Escribe tu propia acción personalizada aquí..."}
                         disabled={isLlmLoading}
-                        className="glass-panel"
+                        style={{ flexGrow: 1 }}
+                      />
+                      <button 
+                        onClick={() => handleAction(customAction)}
+                        disabled={isLlmLoading || !customAction.trim()}
                         style={{ 
-                          padding: "12px", 
-                          cursor: isLlmLoading ? "not-allowed" : "pointer", 
-                          textAlign: "left", 
-                          fontSize: "0.85rem", 
-                          fontWeight: "500", 
-                          background: "rgba(168, 85, 247, 0.05)",
-                          border: "1px solid var(--card-border)",
-                          color: "var(--text-primary)"
+                          padding: "10px 20px", 
+                          background: "var(--accent-gradient)", 
+                          color: "#fff", 
+                          border: "none", 
+                          borderRadius: "6px", 
+                          cursor: isLlmLoading ? "not-allowed" : "pointer",
+                          fontWeight: "700" 
                         }}
                       >
-                        <span style={{ color: "var(--accent-primary)", marginRight: "6px" }}>{idx+1}.</span>
-                        {action}
+                        {isQueryMode ? "Preguntar" : "➔"}
                       </button>
-                    ))}
-                  </div>
+                    </div>
+                    
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", paddingLeft: "4px" }}>
+                      <input 
+                        type="checkbox" 
+                        id="queryCheckbox"
+                        checked={isQueryMode}
+                        onChange={(e) => setIsQueryMode(e.target.checked)}
+                        style={{ cursor: "pointer", width: "16px", height: "16px" }}
+                      />
+                      <label htmlFor="queryCheckbox" style={{ fontSize: "0.8rem", color: "var(--text-secondary)", cursor: "pointer", userSelect: "none" }}>
+                        💡 <strong>Consulta al Master</strong> (Preguntas descriptivas: no consume turno, fatiga, hambre ni lanza dados)
+                      </label>
+                    </div>
+                  </>
                 )}
-
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <input 
-                    type="text" 
-                    value={customAction}
-                    onChange={(e) => setCustomAction(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleAction(customAction)}
-                    placeholder={isQueryMode ? "Consulta tu duda al Master directamente..." : "Escribe tu propia acción personalizada aquí..."}
-                    disabled={isLlmLoading}
-                    style={{ flexGrow: 1 }}
-                  />
-                  <button 
-                    onClick={() => handleAction(customAction)}
-                    disabled={isLlmLoading || !customAction.trim()}
-                    style={{ 
-                      padding: "10px 20px", 
-                      background: "var(--accent-gradient)", 
-                      color: "#fff", 
-                      border: "none", 
-                      borderRadius: "6px", 
-                      cursor: isLlmLoading ? "not-allowed" : "pointer",
-                      fontWeight: "700" 
-                    }}
-                  >
-                    {isQueryMode ? "Preguntar" : "➔"}
-                  </button>
-                </div>
-                
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", paddingLeft: "4px" }}>
-                  <input 
-                    type="checkbox" 
-                    id="queryCheckbox"
-                    checked={isQueryMode}
-                    onChange={(e) => setIsQueryMode(e.target.checked)}
-                    style={{ cursor: "pointer", width: "16px", height: "16px" }}
-                  />
-                  <label htmlFor="queryCheckbox" style={{ fontSize: "0.8rem", color: "var(--text-secondary)", cursor: "pointer", userSelect: "none" }}>
-                    💡 <strong>Consulta al Master</strong> (Preguntas descriptivas: no consume turno, fatiga, hambre ni lanza dados)
-                  </label>
-                </div>
 
               </div>
 
