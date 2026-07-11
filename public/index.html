@@ -270,7 +270,63 @@
       border-color: var(--accent-primary);
       box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
     }
+
+    /* Markdown rendering styling similar to ChatGPT */
+    .markdown-content p {
+      margin-top: 0;
+      margin-bottom: 16px;
+      line-height: 1.7;
+    }
+    .markdown-content p:last-child {
+      margin-bottom: 0;
+    }
+    .markdown-content h1, 
+    .markdown-content h2, 
+    .markdown-content h3, 
+    .markdown-content h4 {
+      font-family: var(--font-title);
+      color: var(--text-primary);
+      margin-top: 24px;
+      margin-bottom: 12px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+    .markdown-content h1 { font-size: 1.45rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px; }
+    .markdown-content h2 { font-size: 1.25rem; }
+    .markdown-content h3 { font-size: 1.1rem; }
+    .markdown-content h4 { font-size: 0.95rem; }
+    
+    .markdown-content hr {
+      border: 0;
+      border-top: 1px solid var(--border-subtle);
+      margin: 24px 0;
+    }
+    
+    .markdown-content ul, 
+    .markdown-content ol {
+      margin-top: 0;
+      margin-bottom: 16px;
+      padding-left: 24px;
+    }
+    .markdown-content li {
+      margin-bottom: 8px;
+    }
+    .markdown-content strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    .markdown-content em {
+      font-style: italic;
+    }
+    .markdown-content blockquote {
+      margin: 0 0 16px 0;
+      padding: 0 0 0 16px;
+      border-left: 4px solid var(--accent-primary);
+      color: var(--text-secondary);
+      font-style: italic;
+    }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
   <div id="root"></div>

@@ -145,6 +145,18 @@ const TIMESCALES = [
 const DEFAULT_SUPABASE_URL = "https://yfnabpnangkzyvwxwdhh.supabase.co";
 const DEFAULT_SUPABASE_KEY = "";
 
+const renderMarkdown = (text) => {
+  if (!text) return { __html: "" };
+  try {
+    if (window.marked) {
+      return { __html: window.marked.parse(text, { breaks: true }) };
+    }
+    return { __html: text.replace(/\n/g, "<br/>") };
+  } catch (e) {
+    return { __html: text.replace(/\n/g, "<br/>") };
+  }
+};
+
 export default function App() {
   // --- STATE VARIABLES ---
   const [apiKey, setApiKey] = useState(() => localStorage.getItem("openai_api_key") || "");
@@ -874,11 +886,9 @@ ${nextCampaign.memory.keyEvents.slice(-20).map((e, i) => `- [${e.date}] ${e.desc
     }).join("\n\n");
 
     // SYSTEM PROMPT: Instructs GPT-4o to calculate PROPORTIONAL hunger and fatigue consumption based on the action
-    const systemPrompt = `Eres el Master de un juego de rol narrativo y simulación. Tu objetivo es narrar el resultado de la acción del jugador de forma inmersiva, reactiva y consistente con las reglas físicas, económicas y narrativas del mundo.
-
-ESTILO NARRATIVO REQUERIDO (ESTILO CHATGPT RPG LARGO):
+    const systemPrompt = `Eres el Master de un juego de rol narrativo y simulación. Tu objetivo ESTILO NARRATIVO REQUERIDO (ESTILO CHATGPT RPG LARGO):
 - Debes escribir con un estilo literario sumamente descriptivo, inmersivo, rico y detallado, exactamente igual a una partida de rol clásica y profunda en ChatGPT.
-- Cada respuesta narrativa debe ser extensa (entre 3 y 4 párrafos completos, largos y descriptivos).
+- Sigue escrupulosamente la estructura de títulos, párrafos cortos de 1 a 3 frases, listas de opciones con sus respectivos apartados de Riesgo y Beneficio, tabla o lista de Estado del Personaje, y Nota del Director detalladas en el campo "narrative".
 - Describe minuciosamente el entorno, los sonidos, los olores, la atmósfera, los diálogos de los personajes, las sensaciones físicas e internas del héroe, y las consecuencias de la acción basándote en la tirada de dados indicada.
 - Evita por completo respuestas cortas, resúmenes escuetos o descripciones rápidas.
 
@@ -909,7 +919,7 @@ OTRAS REGLAS DE SIMULACIÓN:
 9. Propuestas de Acción (suggestedActions): Deben corresponder estrictamente al contexto geográfico/narrativo actual, el momento del día actual (ej: noche requiere sigilo/refugio/antorchas), el clima/estación del año (ej: invierno requiere calentarse/buscar abrigo), y las necesidades físicas (salud baja requiere descanso/curación). Evita opciones genéricas y aburridas.
 10. Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
 {
-  "narrative": "Tu narración literaria extendida (3-4 párrafos extensos y ricos en prosa) sobre el desenlace de la acción basándote en la tirada de dados.",
+  "narrative": "Escribe tu respuesta narrada en Markdown rico adoptando estrictamente la estética de las partidas de rol de ChatGPT. Debes seguir exactamente la siguiente estructura de formato en tu texto:\n\n# [NOMBRE DE LA UBICACIÓN / MUNDO EN MAYÚSCULAS]\n## [Año, Época o Momento Histórico de la partida]\n### [Estación del año y clima actual]\n### **[Día de la aventura] — [Momento del día o Hora exacta]**\n\n[Prosa narrativa inmersiva y atmosférica en párrafos cortos de 1 a 3 frases cada uno, separados por doble salto de línea. Los diálogos deben usar guiones largos e ir en cursiva, ej: —«El arco nace en el bosque...»]\n\n---\n\n# Opciones\n\n### **1. [Título de la opción 1]** (opcionalmente añade ⭐⭐⭐⭐⭐ (Recomendado) si es lo más sabio)\n[Descripción corta de la propuesta de acción 1]\n**Riesgo:** [especifica el riesgo físico/moral, o 'ninguno']\n**Beneficio:** [el beneficio esperado]\n\n---\n\n### **2. [Título de la opción 2]**\n[Descripción, riesgo y beneficio]\n\n---\n\n### **3. [Título de la opción 3]**\n[Descripción, riesgo y beneficio]\n\n---\n\n### **4. [Título de la opción 4]**\n[Descripción, riesgo y beneficio]\n\n---\n\n### **5. Proponer un plan propio**\nPor ejemplo:\n* [Idea sugerida A en viñeta]\n* [Idea sugerida B en viñeta]\n* Cualquier otra idea razonable.\n\n---\n\n## Estado del Personaje y Entorno\n* 🪙 Dinero: **[Dinero actual del personaje en negrita]**\n* 🥖 Comida: [Estado de provisiones y recursos en negrita]\n* 🏡 Vivienda/Refugio: [Estado físico de la vivienda o campamento en negrita]\n* [Otros elementos según aplique, ej: amenazas activas, fatiga, heridas, objetos clave]\n\n### Nota del Director\n[Nota corta con explicaciones del lore, consejos o advertencias narrativas sobre el futuro de las decisiones]",
   "suggestedActions": ["Propuesta 1 (Contextual e inmediata)", "Propuesta 2", "Propuesta 3", "Propuesta 4"],
   "currentLocation": "Lugar actual (corto)",
   "locationImagePrompt": "Prompt en inglés descriptivo del lugar actual para generar una imagen con DALL-E, estilo Anime One Piece: vibrante, colorido, detallado.",
@@ -1998,9 +2008,11 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                           <strong style={{ color: "var(--accent-primary)", fontSize: "0.85rem" }}>🔮 MASTER (Turno {turn.turnNum || 0})</strong>
                           <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>📅 {turn.date}</span>
                         </div>
-                        <p style={{ fontSize: "1.05rem", lineHeight: "1.65", color: "var(--text-primary)", whiteSpace: "pre-line" }}>
-                          {turn.narrative}
-                        </p>
+                          <div 
+                            className="markdown-content" 
+                            dangerouslySetInnerHTML={renderMarkdown(turn.narrative)} 
+                            style={{ fontSize: "1.05rem", lineHeight: "1.65", color: "var(--text-primary)" }}
+                          />
                       </div>
                     </div>
 
@@ -2023,9 +2035,11 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                         <strong style={{ color: "var(--accent-primary)", fontSize: "0.85rem" }}>🔮 MASTER</strong>
                         <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>📅 {currentCampaign.temporal.date}</span>
                       </div>
-                      <p style={{ fontSize: "1.05rem", lineHeight: "1.65", color: "var(--text-primary)" }}>
-                        {currentCampaign.narrative}
-                      </p>
+                        <div 
+                          className="markdown-content" 
+                          dangerouslySetInnerHTML={renderMarkdown(currentCampaign.narrative)} 
+                          style={{ fontSize: "1.05rem", lineHeight: "1.65", color: "var(--text-primary)" }}
+                        />
                     </div>
                   </div>
                 )}
@@ -2813,9 +2827,11 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
             
             <div style={{ background: "var(--panel-bg-darker)", padding: "20px", borderRadius: "8px", border: "1px solid var(--card-border)", marginBottom: "25px", textAlign: "left" }}>
               <h3 style={{ fontSize: "0.95rem", color: "var(--text-secondary)", marginBottom: "8px", fontWeight: "600" }}>Causa de la muerte:</h3>
-              <p style={{ fontSize: "0.95rem", lineHeight: "1.5", color: "var(--text-primary)" }}>
-                {currentCampaign.narrative}
-              </p>
+              <div 
+                className="markdown-content" 
+                dangerouslySetInnerHTML={renderMarkdown(currentCampaign.narrative)} 
+                style={{ fontSize: "0.95rem", lineHeight: "1.5", color: "var(--text-primary)" }}
+              />
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
