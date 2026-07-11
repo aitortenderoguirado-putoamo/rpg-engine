@@ -20,7 +20,18 @@ const REGIONS = [
   { id: "euro_medieval", name: "Europa Medieval (s.XIII)", desc: "Feudalismo, cruzadas, peste incipiente y escolástica." },
   { id: "ing_industrial", name: "Inglaterra Industrial (s.XIX)", desc: "Carbón, fábricas de vapor, trenes y grandes brechas sociales." },
   { id: "jap_edo", name: "Japón — Edo (s.XVII)", desc: "Samoúrais, shogunato, aislamiento, geishas y ronins." },
+  { id: "random", name: "🎲 Ubicación Aleatoria del Mapa", desc: "El Master elegirá una ubicación del mapa mundial de la época de forma completamente aleatoria y coherente." },
   { id: "manual", name: "Definir manualmente", desc: "Escribe tu propia época y ubicación histórica." }
+];
+
+const REALITY_REGIONS = [
+  { id: "esp_madrid", name: "España — Madrid", desc: "Gran urbe contemporánea, oficinas, metro, alquileres caros y vida ajetreada." },
+  { id: "usa_ny", name: "EE.UU. — Nueva York", desc: "Capital del capitalismo, rascacielos, competencia feroz y noches frías." },
+  { id: "jp_tokyo", name: "Japón — Tokio", desc: "Neones, disciplina, soledad urbana, tecnología cotidiana y templos antiguos entre edificios." },
+  { id: "rural_isolated", name: "Pueblo Rural Aislado", desc: "Poca población, naturaleza hostil o calmada, agricultura y desconexión total." },
+  { id: "conflict_zone", name: "Zona de Conflicto en el Tercer Mundo", desc: "Inestabilidad geopolítica, escasez de recursos, refugiados y milicias activas." },
+  { id: "random", name: "🎲 Ubicación Aleatoria del Mapa", desc: "El Master elegirá una ubicación de forma completamente aleatoria y coherente." },
+  { id: "manual", name: "Definir manualmente", desc: "Escribe tu propio país, ciudad o pueblo real moderno." }
 ];
 
 const ARCHETYPES = [
@@ -382,6 +393,11 @@ export default function App() {
       if (wizardRegion === "manual") {
         regionStr = wizardRegionManual || "Región Personalizada";
       }
+    } else if (wizardWorld === "reality") {
+      regionStr = REALITY_REGIONS.find(r => r.id === wizardRegion)?.name || "";
+      if (wizardRegion === "manual") {
+        regionStr = wizardRegionManual || "Ubicación Personalizada";
+      }
     } else if (wizardWorld === "custom") {
       worldNameStr = wizardWorldDesc || "Mundo Propio";
     }
@@ -510,15 +526,17 @@ Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente 
 
           const initialUserPrompt = `
 DATOS DE LA CAMPAÑA:
-- Universo/Mundo: ${worldNameStr}
+- Universo/Mundo: ${worldNameStr} ${wizardWorld === "history" || wizardWorld === "reality" ? "(¡ATENCIÓN! Realidad Estricta/Historia Real: ¡Está terminantemente PROHIBIDA la fantasía, magia, monstruos o elementos inverosímiles!)" : ""}
 - Trasfondo del Mundo: ${wizardWorldDesc || "Estándar"}
-- Región: ${regionStr || "Zona central"}
+- Región/Ubicación: ${regionStr || "Ubicación Aleatoria"}
 - Personaje: ${wizardName}
 - Edad: ${wizardAge} años
 - Trasfondo del Personaje: ${wizardBackstory || "Aventurero comenzando su viaje."}
 - Arquetipo: ${arch?.name || "Libre"}
 - Habilidades Iniciales: ${initialSkills.map(s => `${s.name} (nv ${s.level})`).join(", ")}
 - Oro Inicial: ${finalGold} monedas.
+
+${wizardRegion === "random" ? "INSTRUCCIÓN ESPECIAL DE UBICACIÓN ALEATORIA:\nEl jugador ha seleccionado una Ubicación Aleatoria. TÚ debes elegir una ubicación geográfica real del mapa mundial (país, ciudad, pueblo) que sea coherente con la era histórica o realidad contemporánea elegida. Escribe el nombre de esta ciudad/país en el campo 'currentLocation' del JSON." : ""}
 
 Genera el JSON de respuesta con la introducción de inicio de la campaña, la ciudad inicial y el contexto sociohistórico.`;
 
@@ -1628,7 +1646,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 {theme === "dark" ? "☀️ Día" : "🌙 Noche"}
               </button>
               <span style={{ fontSize: "0.9rem", color: "var(--accent-primary)", fontWeight: "600" }}>
-                Paso {wizardStep} de {wizardWorld === "history" ? 6 : 5}
+                Paso {(!["history", "reality"].includes(wizardWorld) && wizardStep > 2) ? wizardStep - 1 : wizardStep} de {["history", "reality"].includes(wizardWorld) ? 6 : 5}
               </span>
             </div>
           </header>
@@ -1644,7 +1662,14 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                   {WORLDS.map(w => (
                     <div 
                       key={w.id}
-                      onClick={() => setWizardWorld(w.id)}
+                      onClick={() => {
+                        setWizardWorld(w.id);
+                        if (w.id === "reality") {
+                          setWizardRegion("random");
+                        } else if (w.id === "history") {
+                          setWizardRegion("esp_reconquista");
+                        }
+                      }}
                       className="glass-panel"
                       style={{ 
                         padding: "16px", 
@@ -1675,7 +1700,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <button onClick={() => setCurrentScreen("campaigns")} style={{ padding: "10px 20px" }}>Atrás</button>
                   <button 
-                    onClick={() => setWizardStep(wizardWorld === "history" ? 2 : 3)}
+                    onClick={() => setWizardStep(["history", "reality"].includes(wizardWorld) ? 2 : 3)}
                     style={{ padding: "10px 20px", background: "var(--accent-gradient)", color: "#fff", border: "none", borderRadius: "6px", fontWeight: "600" }}
                   >
                     Siguiente
@@ -1685,13 +1710,13 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
             )}
 
             {/* STEP 2 */}
-            {wizardStep === 2 && wizardWorld === "history" && (
+            {wizardStep === 2 && ["history", "reality"].includes(wizardWorld) && (
               <div>
                 <h3 style={{ fontFamily: "var(--font-title)", fontSize: "1.1rem", marginBottom: "15px", color: "var(--text-secondary)" }}>
-                  Elige la Época y Región Histórica:
+                  {wizardWorld === "history" ? "Elige la Época y Región Histórica:" : "Elige la Ubicación o Región Geográfica:"}
                 </h3>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "20px" }}>
-                  {REGIONS.map(r => (
+                  {(wizardWorld === "history" ? REGIONS : REALITY_REGIONS).map(r => (
                     <div 
                       key={r.id}
                       onClick={() => setWizardRegion(r.id)}
@@ -1711,12 +1736,14 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
 
                 {wizardRegion === "manual" && (
                   <div style={{ marginBottom: "20px" }}>
-                    <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "6px" }}>Indica tu ubicación/era personalizada:</label>
+                    <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "6px" }}>
+                      {wizardWorld === "history" ? "Indica tu ubicación/era personalizada:" : "Indica tu país/ciudad/pueblo real moderno:"}
+                    </label>
                     <input 
                       type="text"
                       value={wizardRegionManual}
                       onChange={(e) => setWizardRegionManual(e.target.value)}
-                      placeholder="Ej: Grecia — Periodo Helenístico"
+                      placeholder={wizardWorld === "history" ? "Ej: Grecia — Periodo Helenístico" : "Ej: España — Sevilla"}
                       style={{ width: "100%" }}
                     />
                   </div>
@@ -1760,7 +1787,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <button onClick={() => setWizardStep(wizardWorld === "history" ? 2 : 1)} style={{ padding: "10px 20px" }}>Atrás</button>
+                  <button onClick={() => setWizardStep(["history", "reality"].includes(wizardWorld) ? 2 : 1)} style={{ padding: "10px 20px" }}>Atrás</button>
                   <button 
                     onClick={() => setWizardStep(4)}
                     style={{ padding: "10px 20px", background: "var(--accent-gradient)", color: "#fff", border: "none", borderRadius: "6px", fontWeight: "600" }}
