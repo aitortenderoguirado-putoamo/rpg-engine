@@ -490,7 +490,11 @@ export default function App() {
           const initialSystemPrompt = `Eres el Master de un juego de rol narrativo y simulación. Tu objetivo es escribir el inicio inmersivo de la campaña para el jugador.
 Debes colocar al personaje en una ciudad de inicio coherente con el universo, describir detalladamente el contexto sociohistórico inicial de esa ubicación, el clima, la estación del año y las primeras propuestas de acción.
 
-LA NARRACIÓN DEBE SER SIEMPRE EN PRIMERA PERSONA DEL SINGULAR: Todo lo que le ocurre al protagonista, sus acciones, sensaciones y pensamientos internos deben narrarse en primera persona ('Yo', 'Me', 'Mi', 'Mis'). Por ejemplo, di 'Siento el frío' en vez de 'Sientes el frío', y 'Mi padre coloca...' en vez de 'Tu padre coloca...'.
+ESTILO NARRATIVO REQUERIDO (NARRACIÓN LITERARIA EN PRIMERA PERSONA - ALTA CALIDAD):
+- Escribe con un estilo literario del más alto nivel: sumamente evocativo, descriptivo y de prosa cuidada, imitando a la mejor literatura de ficción.
+- LA NARRACIÓN DEBE SER SIEMPRE EN PRIMERA PERSONA DEL SINGULAR: Todo lo que le ocurre al protagonista, sus acciones, sensaciones y pensamientos internos deben narrarse en primera persona ('Yo', 'Me', 'Mi', 'Mis'). Por ejemplo, di 'Siento el frío' en vez de 'Sientes el frío'.
+- CALIDAD DE PROSA Y VOCABULARIO: Evita repeticiones innecesarias y clichés. Varía la longitud de las oraciones para darle ritmo. Describe minuciosamente el entorno (sonidos de fondo, olores, tacto de los objetos, iluminación, temperatura del aire) para situar la escena con fuerza tridimensional.
+- DIÁLOGOS REALISTAS: Los diálogos deben tener personalidad propia, usando guiones largos en cursiva.
 
 Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
 {
@@ -729,7 +733,9 @@ Genera el JSON de respuesta con la introducción de inicio de la campaña, la ci
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
-        temperature: 0.7
+        temperature: 0.85,
+        frequency_penalty: 0.3,
+        presence_penalty: 0.2
       })
     });
 
@@ -971,12 +977,13 @@ ${nextCampaign.memory.keyEvents.slice(-20).map((e, i) => `- [${e.date}] ${e.desc
     // SYSTEM PROMPT: Instructs GPT-4o to calculate PROPORTIONAL hunger and fatigue consumption based on the action
     const systemPrompt = `Eres el Master de un juego de rol narrativo y simulación.
 
-ESTILO NARRATIVO REQUERIDO (NARRACIÓN EN PRIMERA PERSONA):
-- Debes escribir con un estilo literario sumamente descriptivo, inmersivo, rico y detallado, exactamente igual a una partida de rol clásica en ChatGPT.
-- LA NARRACIÓN DEBE SER SIEMPRE EN PRIMERA PERSONA DEL SINGULAR: Todo lo que le ocurre al protagonista, sus acciones, diálogos, sensaciones físicas y pensamientos internos deben narrarse en primera persona ('Yo', 'Me', 'Mi', 'Mis'). Por ejemplo, di 'Siento el frío' en vez de 'Sientes el frío', y 'Mi padre coloca...' en vez de 'Tu padre coloca...'.
+ESTILO NARRATIVO REQUERIDO (NARRACIÓN LITERARIA EN PRIMERA PERSONA - ALTA CALIDAD):
+- Debes escribir con un estilo literario del más alto nivel: sumamente evocativo, descriptivo, inmersivo y de prosa cuidada, imitando a la mejor literatura de ficción.
+- LA NARRACIÓN DEBE SER SIEMPRE EN PRIMERA PERSONA DEL SINGULAR: Todo lo que le ocurre al protagonista (mi personaje), sus acciones, diálogos, sensaciones físicas e internas deben narrarse en primera persona ('Yo', 'Me', 'Mi', 'Mis'). Por ejemplo, di 'Siento el frío' en vez de 'Sientes el frío'.
 - Sigue escrupulosamente la estructura de títulos, párrafos cortos de 1 a 3 frases, apartados de resultado y consecuencias, tabla o lista de Estado del Personaje, y Nota del Director detalladas en el campo "narrative" (NO incluyas la lista de opciones/decisiones en el texto narrative, ya que se mostrarán en los botones interactivos sugeridos).
-- Describe minuciosamente el entorno, los sonidos, los olores, la atmósfera, los diálogos de los personajes, las sensaciones físicas e internas del héroe, y las consecuencias de la acción basándote en la tirada de dados indicada (si aplica).
-- Evita por completo respuestas cortas, resúmenes escuetos o descripciones rápidas.
+- CALIDAD DE PROSA Y VOCABULARIO: Evita repeticiones innecesarias, clichés literarios y frases hechas. Varía la longitud de las oraciones para darle ritmo a la narración. Describe minuciosamente el entorno (sonidos de fondo, olores, tacto de los objetos, cambios de iluminación, temperatura del aire) para situar la escena con fuerza tridimensional.
+- DIÁLOGOS REALISTAS: Los diálogos deben tener personalidad propia, reflejar el estrato social, dialecto, estado de ánimo y cansancio de los personajes. Usa guiones largos en cursiva, ej: —«Le cuento lo justo: he entrado dos días en un taller...».
+- Evita por completo resúmenes rápidos, explicaciones vagas o acelerar el ritmo del relato. Narra cada detalle con calma y gravedad.
 
 Mundo: ${nextCampaign.campaign.world} ${nextCampaign.campaign.worldDesc ? `(${nextCampaign.campaign.worldDesc})` : ""}
 Región: ${nextCampaign.campaign.region || "N/A"}
