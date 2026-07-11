@@ -162,6 +162,10 @@ export default function App() {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem("openai_api_key") || "");
   const [supabaseUrl, setSupabaseUrl] = useState(() => localStorage.getItem("supabase_url") || DEFAULT_SUPABASE_URL);
   const [supabaseKey, setSupabaseKey] = useState(() => localStorage.getItem("supabase_key") || DEFAULT_SUPABASE_KEY);
+  const [isDiceRollEnabled, setIsDiceRollEnabled] = useState(() => {
+    const val = localStorage.getItem("is_dice_roll_enabled");
+    return val === null ? true : val === "true";
+  });
 
   const [campaigns, setCampaigns] = useState([]);
   const [currentCampaign, setCurrentCampaign] = useState(null);
@@ -485,6 +489,8 @@ export default function App() {
         try {
           const initialSystemPrompt = `Eres el Master de un juego de rol narrativo y simulación. Tu objetivo es escribir el inicio inmersivo de la campaña para el jugador.
 Debes colocar al personaje en una ciudad de inicio coherente con el universo, describir detalladamente el contexto sociohistórico inicial de esa ubicación, el clima, la estación del año y las primeras propuestas de acción.
+
+LA NARRACIÓN DEBE SER SIEMPRE EN PRIMERA PERSONA DEL SINGULAR: Todo lo que le ocurre al protagonista, sus acciones, sensaciones y pensamientos internos deben narrarse en primera persona ('Yo', 'Me', 'Mi', 'Mis'). Por ejemplo, di 'Siento el frío' en vez de 'Sientes el frío', y 'Mi padre coloca...' en vez de 'Tu padre coloca...'.
 
 Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
 {
@@ -918,10 +924,15 @@ Genera el JSON de respuesta con la introducción de inicio de la campaña, la ci
     }
 
     // 3. Compute dice roll
-    const rollInfo = calculateDiceRoll(actionText, nextCampaign);
-    setLastDiceRoll(rollInfo);
-
-    const rollString = `🎲 ${rollInfo.total} (d20:${rollInfo.base}${rollInfo.modifiers.map(m => ` ${m.val >= 0 ? `+${m.val}` : m.val}(${m.name.split(" ")[0]})`).join("")}) vs DC${rollInfo.dc} ➔ ${rollInfo.status}`;
+    let rollInfo = null;
+    let rollString = "Sin tiradas de dados activas. El resultado se determina de forma puramente narrativa.";
+    if (isDiceRollEnabled) {
+      rollInfo = calculateDiceRoll(actionText, nextCampaign);
+      setLastDiceRoll(rollInfo);
+      rollString = `🎲 ${rollInfo.total} (d20:${rollInfo.base}${rollInfo.modifiers.map(m => ` ${m.val >= 0 ? `+${m.val}` : m.val}(${m.name.split(" ")[0]})`).join("")}) vs DC${rollInfo.dc} ➔ ${rollInfo.status}`;
+    } else {
+      setLastDiceRoll(null);
+    }
 
     // 4. Progress Date
     const nextDate = advanceTime(nextCampaign.temporal);
@@ -958,15 +969,18 @@ ${nextCampaign.memory.keyEvents.slice(-20).map((e, i) => `- [${e.date}] ${e.desc
     }).join("\n\n");
 
     // SYSTEM PROMPT: Instructs GPT-4o to calculate PROPORTIONAL hunger and fatigue consumption based on the action
-    const systemPrompt = `Eres el Master de un juego de rol narrativo y simulación. Tu objetivo ESTILO NARRATIVO REQUERIDO (ESTILO CHATGPT RPG LARGO):
-- Debes escribir con un estilo literario sumamente descriptivo, inmersivo, rico y detallado, exactamente igual a una partida de rol clásica y profunda en ChatGPT.
+    const systemPrompt = `Eres el Master de un juego de rol narrativo y simulación.
+
+ESTILO NARRATIVO REQUERIDO (NARRACIÓN EN PRIMERA PERSONA):
+- Debes escribir con un estilo literario sumamente descriptivo, inmersivo, rico y detallado, exactamente igual a una partida de rol clásica en ChatGPT.
+- LA NARRACIÓN DEBE SER SIEMPRE EN PRIMERA PERSONA DEL SINGULAR: Todo lo que le ocurre al protagonista, sus acciones, diálogos, sensaciones físicas y pensamientos internos deben narrarse en primera persona ('Yo', 'Me', 'Mi', 'Mis'). Por ejemplo, di 'Siento el frío' en vez de 'Sientes el frío', y 'Mi padre coloca...' en vez de 'Tu padre coloca...'.
 - Sigue escrupulosamente la estructura de títulos, párrafos cortos de 1 a 3 frases, apartados de resultado y consecuencias, tabla o lista de Estado del Personaje, y Nota del Director detalladas en el campo "narrative" (NO incluyas la lista de opciones/decisiones en el texto narrative, ya que se mostrarán en los botones interactivos sugeridos).
-- Describe minuciosamente el entorno, los sonidos, los olores, la atmósfera, los diálogos de los personajes, las sensaciones físicas e internas del héroe, y las consecuencias de la acción basándote en la tirada de dados indicada.
+- Describe minuciosamente el entorno, los sonidos, los olores, la atmósfera, los diálogos de los personajes, las sensaciones físicas e internas del héroe, y las consecuencias de la acción basándote en la tirada de dados indicada (si aplica).
 - Evita por completo respuestas cortas, resúmenes escuetos o descripciones rápidas.
 
 Mundo: ${nextCampaign.campaign.world} ${nextCampaign.campaign.worldDesc ? `(${nextCampaign.campaign.worldDesc})` : ""}
 Región: ${nextCampaign.campaign.region || "N/A"}
-Dificultad: ${nextCampaign.difficulty} (DC Tiradas: ${rollInfo.dc})
+Dificultad: ${nextCampaign.difficulty} ${rollInfo ? `(DC Tiradas: ${rollInfo.dc})` : ""}
 Escala Temporal: ${nextCampaign.timeScale}
 
 REGLAS DE SIMULACIÓN DE ESTADÍSTICAS FÍSICAS (PROPORCIONALES):
@@ -1020,6 +1034,18 @@ OTRAS REGLAS DE SIMULACIÓN:
   "turnSummary": "Resumen rápido del turno en una sola frase."
 }`;
 
+    const rollBlockText = isDiceRollEnabled && rollInfo ? `
+TIRADA DE DADO EJECUTADA PARA ESTE TURNO:
+Resultado de Tirada: ${rollString}
+Modificadores aplicados: ${JSON.stringify(rollInfo.modifiers)}
+Habilidad emparejada: ${rollInfo.matchedSkill || "Ninguna"}
+Atributo emparejado: ${rollInfo.matchedAttr}
+` : `
+NO HAY TIRADAS DE DADOS PARA ESTE TURNO:
+El resultado de la acción debe determinarse de forma puramente narrativa, lógica y razonable basándose en las capacidades y contexto del personaje.
+OBLIGATORIO: En la sección "Tirada oculta" del Markdown narrative, en lugar de poner números de tiradas de dados, pon una breve explicación narrativa del esfuerzo/capacidad (ej: "Lectura social + credibilidad") y pon en "Resultado" un veredicto cualitativo lógico (ej: "Éxito narrativo" o "Fallo narrativo") según la historia.
+`;
+
     const userPrompt = `
 HISTORIAL DE CAMPAÑA RECIENTE:
 ${recentHistory}
@@ -1030,12 +1056,9 @@ ${memoryBlock}
 ESTADO ACTUAL DETALLADO DEL PERSONAJE:
 ${stateContext}
 
-TIRADA DE DADO EJECUTADA PARA ESTE TURNO:
-Acción del jugador: "${actionText}"
-Resultado de Tirada: ${rollString}
-Modificadores aplicados: ${JSON.stringify(rollInfo.modifiers)}
-Habilidad emparejada: ${rollInfo.matchedSkill || "Ninguna"}
-Atributo emparejado: ${rollInfo.matchedAttr}
+ACCIÓN PROPUESTA POR EL JUGADOR:
+"${actionText}"
+${rollBlockText}
 
 Genera el JSON de respuesta con el desenlace narrativo literario y extenso.`;
 
@@ -1222,7 +1245,7 @@ Genera el JSON de respuesta con el desenlace narrativo literario y extenso.`;
         turnNum: nextCampaign.turn,
         date: nextCampaign.temporal.date,
         action: actionText,
-        textRoll: rollString,
+        textRoll: isDiceRollEnabled ? rollString : null,
         narrative: parsed.narrative,
         summary: parsed.turnSummary || ""
       };
@@ -1543,6 +1566,23 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                   placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX..."
                   style={{ width: "100%" }}
                 />
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "10px" }}>
+                <input 
+                  type="checkbox" 
+                  id="diceRollToggle"
+                  checked={isDiceRollEnabled}
+                  onChange={(e) => {
+                    const val = e.target.checked;
+                    setIsDiceRollEnabled(val);
+                    localStorage.setItem("is_dice_roll_enabled", String(val));
+                  }}
+                  style={{ cursor: "pointer", width: "18px", height: "18px" }}
+                />
+                <label htmlFor="diceRollToggle" style={{ fontSize: "0.95rem", color: "var(--text-primary)", cursor: "pointer", fontWeight: "500", userSelect: "none" }}>
+                  🎲 Habilitar tiradas de dados aleatorias (d20)
+                </label>
               </div>
             </div>
 
@@ -2067,11 +2107,13 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                     </div>
 
                     {/* Centered Roll Badge */}
-                    <div style={{ display: "flex", justifyContent: "flex-start", paddingLeft: "10px" }}>
-                      <span style={{ background: "var(--panel-bg-darker)", padding: "4px 10px", borderRadius: "6px", fontSize: "0.8rem", fontFamily: "monospace", borderLeft: "3px solid var(--accent-secondary)", color: "var(--text-secondary)" }}>
-                        {turn.textRoll}
-                      </span>
-                    </div>
+                    {turn.textRoll && (
+                      <div style={{ display: "flex", justifyContent: "flex-start", paddingLeft: "10px" }}>
+                        <span style={{ background: "var(--panel-bg-darker)", padding: "4px 10px", borderRadius: "6px", fontSize: "0.8rem", fontFamily: "monospace", borderLeft: "3px solid var(--accent-secondary)", color: "var(--text-secondary)" }}>
+                          {turn.textRoll}
+                        </span>
+                      </div>
+                    )}
 
                     {/* Master Response Bubble */}
                     <div className="chat-bubble master-bubble">
