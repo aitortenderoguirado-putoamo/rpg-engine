@@ -467,6 +467,7 @@ export default function App() {
       currentLocation: "Punto de Inicio"
     };
 
+    // Save starting state to local first so we have a fallback
     await saveCampaignState(newCampaign);
     setCurrentCampaign(newCampaign);
     setHeritageSource(null);
@@ -477,9 +478,80 @@ export default function App() {
     setWizardOrigin("");
     setWizardIdentity("");
     setWizardBackstory("");
-    
+
     if (apiKey) {
-      triggerImageGeneration(newCampaign, `A wide view of the starting area: ${newCampaign.currentLocation} in the region ${newCampaign.campaign.region || newCampaign.campaign.world}. Estilo Anime One Piece: vibrant, colorful, clean anime outline, detailed shading.`);
+      setIsLlmLoading(true);
+      (async () => {
+        try {
+          const initialSystemPrompt = `Eres el Master de un juego de rol narrativo y simulación. Tu objetivo es escribir el inicio inmersivo de la campaña para el jugador.
+Debes colocar al personaje en una ciudad de inicio coherente con el universo, describir detalladamente el contexto sociohistórico inicial de esa ubicación, el clima, la estación del año y las primeras propuestas de acción.
+
+Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
+{
+  "narrative": "Escribe tu respuesta narrada en Markdown rico adoptando estrictamente la estética de las partidas de rol de ChatGPT. Debes seguir exactamente la siguiente estructura de formato en tu texto:\\n\\n# [NOMBRE DE LA CIUDAD O UBICACIÓN DE INICIO EN MAYÚSCULAS]\\n## [Contexto Sociohistórico Corto de la Partida]\\n### [Estación del año y clima inicial]\\n### **Día 1 — 08:00 (Mañana)**\\n\\n[Prosa narrativa inmersiva y de bienvenida de 3 a 5 párrafos cortos de 1 a 3 frases cada uno, separados por doble salto de línea, introduciendo al héroe, dónde se encuentra físicamente, la atmósfera de las calles, la situación social/política de la ciudad y el contexto inicial de su trasfondo. Diálogos en cursiva y con guiones largos].\\n\\n---\\n\\n# Opciones\\n\\n### **1. [Título de la opción 1]** (opcionalmente añade ⭐⭐⭐⭐⭐ (Recomendado) si es lo más sabio)\\n[Descripción corta de la propuesta de acción 1]\\n**Riesgo:** [especifica el riesgo o 'ninguno']\\n**Beneficio:** [el beneficio esperado]\\n\\n---\\n\\n### **2. [Título de la opción 2]**\\n[Descripción, riesgo y beneficio]\\n\\n---\\n\\n### **3. [Título de la opción 3]**\\n[Descripción, riesgo y beneficio]\\n\\n---\\n\\n### **4. [Título de la opción 4]**\\n[Descripción, riesgo y beneficio]\\n\\n---\\n\\n### **5. Proponer un plan propio**\\nPor ejemplo:\\n* [Idea sugerida A]\\n* [Idea sugerida B]\\n* Cualquier otra idea razonable.\\n\\n---\\n\\n## Estado Inicial\\n* 🪙 Dinero: **[Dinero inicial del personaje en negrita]**\\n* 🥖 Comida: **Suficiente para el inicio**\\n* 🏡 Refugio/Vivienda: **Estable**\\n\\n### Nota del Director\\n[Breve nota de bienvenida del Master]",
+  "suggestedActions": ["Título Opción 1", "Título Opción 2", "Título Opción 3", "Título Opción 4"],
+  "currentLocation": "Nombre de la Ciudad o Ubicación de Inicio",
+  "locationImagePrompt": "Descriptive English prompt of the starting location and city to generate an image with DALL-E, style Anime One Piece: vibrant, detailed.",
+  "changes": {
+    "worldClimate": "Clima de inicio (ej: Soleado, Nublado, Nevando)",
+    "worldSeason": "Estación de inicio (ej: Otoño, Invierno)"
+  }
+}`;
+
+          const initialUserPrompt = `
+DATOS DE LA CAMPAÑA:
+- Universo/Mundo: ${worldNameStr}
+- Trasfondo del Mundo: ${wizardWorldDesc || "Estándar"}
+- Región: ${regionStr || "Zona central"}
+- Personaje: ${wizardName}
+- Edad: ${wizardAge} años
+- Trasfondo del Personaje: ${wizardBackstory || "Aventurero comenzando su viaje."}
+- Arquetipo: ${arch?.name || "Libre"}
+- Habilidades Iniciales: ${initialSkills.map(s => `${s.name} (nv ${s.level})`).join(", ")}
+- Oro Inicial: ${finalGold} monedas.
+
+Genera el JSON de respuesta con la introducción de inicio de la campaña, la ciudad inicial y el contexto sociohistórico.`;
+
+          const rawContent = await callGPTNarrator(initialSystemPrompt, initialUserPrompt);
+          let cleanContent = rawContent.trim();
+          if (cleanContent.startsWith("```json")) {
+            cleanContent = cleanContent.substring(7);
+          } else if (cleanContent.startsWith("```")) {
+            cleanContent = cleanContent.substring(3);
+          }
+          if (cleanContent.endsWith("```")) {
+            cleanContent = cleanContent.substring(0, cleanContent.length - 3);
+          }
+
+          const parsed = JSON.parse(cleanContent.trim());
+          
+          const updatedCampaign = {
+            ...newCampaign,
+            narrative: parsed.narrative,
+            suggestedActions: parsed.suggestedActions || newCampaign.suggestedActions,
+            currentLocation: parsed.currentLocation || newCampaign.currentLocation
+          };
+
+          if (parsed.changes) {
+            if (parsed.changes.worldClimate) updatedCampaign.world.climate = parsed.changes.worldClimate;
+            if (parsed.changes.worldSeason) updatedCampaign.world.season = parsed.changes.worldSeason;
+          }
+
+          await saveCampaignState(updatedCampaign);
+          setCurrentCampaign(updatedCampaign);
+          
+          const imagePrompt = parsed.locationImagePrompt || `A wide view of the starting area: ${updatedCampaign.currentLocation} in the region ${updatedCampaign.campaign.region || updatedCampaign.campaign.world}. Estilo Anime One Piece: vibrant, colorful, clean anime outline, detailed shading.`;
+          triggerImageGeneration(updatedCampaign, imagePrompt);
+        } catch (err) {
+          console.error("Error al generar la introducción inmersiva:", err);
+          // Fallback
+          triggerImageGeneration(newCampaign, `A wide view of the starting area: ${newCampaign.currentLocation} in the region ${newCampaign.campaign.region || newCampaign.campaign.world}. Estilo Anime One Piece: vibrant, colorful, clean outline, detailed shading.`);
+        } finally {
+          setIsLlmLoading(false);
+        }
+      })();
+    } else {
+      triggerImageGeneration(newCampaign, `A wide view of the starting area: ${newCampaign.currentLocation} in the region ${newCampaign.campaign.region || newCampaign.campaign.world}. Estilo Anime One Piece: vibrant, colorful, clean outline, detailed shading.`);
     }
   };
 
