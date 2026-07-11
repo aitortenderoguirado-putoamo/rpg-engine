@@ -2293,6 +2293,46 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
             {/* Right Column: Collapsible Sidebar */}
             <div className={`sidebar-panel ${!isSidebarOpen ? "collapsed" : ""}`}>
               
+              {/* Timescale Selector Panel */}
+              <div className="glass-panel" style={{ padding: "12px 15px", display: "flex", flexDirection: "column", gap: "6px", marginBottom: "10px" }}>
+                <span style={{ fontSize: "0.8rem", fontWeight: "700", color: "var(--accent-primary)", display: "flex", alignItems: "center", gap: "6px" }}>
+                  ⏱️ Escala Temporal
+                </span>
+                <select
+                  value={currentCampaign.timeScale}
+                  onChange={(e) => {
+                    const newScale = e.target.value;
+                    const updated = {
+                      ...currentCampaign,
+                      timeScale: newScale,
+                      temporal: {
+                        ...currentCampaign.temporal,
+                        scale: newScale
+                      }
+                    };
+                    setCurrentCampaign(updated);
+                    saveCampaignState(updated);
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "6px 8px",
+                    borderRadius: "6px",
+                    background: "var(--input-bg)",
+                    border: "1px solid var(--border-subtle)",
+                    color: "var(--text-primary)",
+                    fontSize: "0.8rem",
+                    fontWeight: "600",
+                    cursor: "pointer"
+                  }}
+                >
+                  <option value="moment">⏱️ Tiempo Real (Minutos/Horas)</option>
+                  <option value="day">☀️ Diario (Día a Día)</option>
+                  <option value="week">📅 Semanal (Semana a Semana)</option>
+                  <option value="month">🌙 Mensual (Mes a Mes)</option>
+                  <option value="year">⏳ Anual (Año a Año)</option>
+                </select>
+              </div>
+
               {/* Stats HUD Panel */}
               <div className="glass-panel" style={{ padding: "15px", display: "flex", flexDirection: "column", gap: "12px" }}>
                 
