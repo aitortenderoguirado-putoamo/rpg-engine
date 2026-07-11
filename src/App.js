@@ -12,14 +12,29 @@ const WORLDS = [
 ];
 
 const REGIONS = [
-  { id: "esp_reconquista", name: "España — Reconquista (s.XI)", desc: "Conflicto fronterizo, caballeros, califatos y reinos cristianos en liza." },
-  { id: "esp_oro", name: "España — Siglo de Oro (s.XVI)", desc: "Imperio, duelos de espada, pícaros en Sevilla, poetas y riquezas del nuevo mundo." },
-  { id: "esp_ilustracion", name: "España — Ilustración (s.XVIII)", desc: "Reformismo, academias, bandolerismo y tensiones prerrevolucionarias." },
-  { id: "fra_revolucion", name: "Francia — Revolución (1789)", desc: "Terror, guillotinas, asambleas populares e ideales de libertad." },
-  { id: "roma_republica", name: "Roma — República (s.I a.C.)", desc: "Senado, legiones, conspiraciones patricias y rebeliones de esclavos." },
-  { id: "euro_medieval", name: "Europa Medieval (s.XIII)", desc: "Feudalismo, cruzadas, peste incipiente y escolástica." },
-  { id: "ing_industrial", name: "Inglaterra Industrial (s.XIX)", desc: "Carbón, fábricas de vapor, trenes y grandes brechas sociales." },
-  { id: "jap_edo", name: "Japón — Edo (s.XVII)", desc: "Samoúrais, shogunato, aislamiento, geishas y ronins." },
+  // Europa
+  { id: "esp_reconquista", name: "Europa — España (s.XI)", desc: "Época de la Reconquista: caballeros, califatos, reinos cristianos y el cantar del Cid." },
+  { id: "esp_oro", name: "Europa — España (s.XVI)", desc: "Siglo de Oro: pícaros en Sevilla, poetas de corral de comedias y galeones cargados de plata." },
+  { id: "fra_revolucion", name: "Europa — Francia (1789)", desc: "Revolución Francesa: el Terror, guillotinas, asambleas populares e ideales de libertad." },
+  { id: "roma_republica", name: "Europa — Roma (s.I a.C.)", desc: "Senado romano, legiones, conspiraciones patricias y rebeliones de esclavos." },
+  { id: "ing_industrial", name: "Europa — Inglaterra (s.XIX)", desc: "Revolución Industrial: carbón, fábricas de vapor, trenes y grandes brechas sociales." },
+  
+  // Asia
+  { id: "jap_edo", name: "Asia — Japón (s.XVII)", desc: "Periodo Edo: samuráis, shogunato Tokugawa, aislamiento absoluto y ronins errantes." },
+  { id: "china_tang", name: "Asia — China (s.VIII)", desc: "Dinastía Tang: edad de oro de las artes, comercio en la Ruta de la Seda y corte imperial de Chang'an." },
+  
+  // América
+  { id: "azt_mexico", name: "América — Imp. Azteca (s.XV)", desc: "Gran Tenochtitlan: templos sobre el lago Texcoco, sacerdotes, guerreros jaguar y alianzas del Anáhuac." },
+  { id: "usa_gold", name: "América — Oeste Americano (1849)", desc: "Fiebre del Oro: pioneros en carretas, forajidos de revólver, sheriffs y fiebre aurífera de California." },
+  
+  // África
+  { id: "egy_nilo", name: "África — Egipto (s.XIII a.C.)", desc: "Imperio Nuevo: faraones en Tebas, escribas sagrados, el Nilo y la diplomacia de la Edad del Bronce." },
+  { id: "mali_tombuctu", name: "África — Imp. de Mali (s.XIV)", desc: "Reinado de Mansa Musa: caravanas transaharianas de sal y oro, y Tombuctú como epicentro del saber." },
+  
+  // Oceanía
+  { id: "pol_pacifico", name: "Oceanía — Polinesia (s.X)", desc: "Colonización del Pacífico: navegación astronómica en canoas dobles y jefaturas de clanes isleños." },
+
+  // Generales
   { id: "random", name: "🎲 Ubicación Aleatoria del Mapa", desc: "El Master elegirá una ubicación del mapa mundial de la época de forma completamente aleatoria y coherente." },
   { id: "manual", name: "Definir manualmente", desc: "Escribe tu propia época y ubicación histórica." }
 ];
@@ -123,6 +138,24 @@ const ARCHETYPES = [
       { name: "Pluma y Tintero", qty: 1, cat: "Utilidad", value: 3 }
     ],
     traits: ["Mente Analítica"]
+  },
+  {
+    id: "artesano",
+    name: "Artesano 🛠️",
+    desc: "Especialista en la creación, reparación y tasación de objetos, herramientas y estructuras.",
+    attrs: { fuerza: 11, agilidad: 12, inteligencia: 13, carisma: 10, resistencia: 12 },
+    gold: 80,
+    skills: [
+      { name: "Artesanía", level: 2 },
+      { name: "Reparación", level: 1 },
+      { name: "Tasación", level: 1 }
+    ],
+    items: [
+      { name: "Martillo de Trabajo", qty: 1, cat: "Herramienta", value: 10 },
+      { name: "Caja de Herramientas", qty: 1, cat: "Herramienta", value: 20 },
+      { name: "Retazos de Materiales", qty: 5, cat: "Material", value: 2 }
+    ],
+    traits: ["Precisión Manual"]
   },
   {
     id: "libre",
