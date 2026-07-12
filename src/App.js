@@ -590,6 +590,8 @@ export default function App() {
     else if (wizardTimeScale === "year") dateStr = "Año 1";
 
     const startingProperties = arch?.properties ? JSON.parse(JSON.stringify(arch.properties)) : [];
+    let inheritedGold = 0;
+    let inheritedItem = null;
     let inheritedProperties = [];
     let initialMemorySummary = `La historia de ${wizardName} da comienzo en la región de ${regionStr || worldNameStr}.`;
 
