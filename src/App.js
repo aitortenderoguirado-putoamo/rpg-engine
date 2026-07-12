@@ -625,7 +625,7 @@ Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente 
   "narrative": "Escribe tu respuesta narrada en Markdown rico adoptando estrictamente la estética de las partidas de rol de ChatGPT. Debes seguir exactamente la siguiente estructura de formato en tu texto:\\n\\n# [NOMBRE DE LA CIUDAD O UBICACIÓN DE INICIO EN MAYÚSCULAS]\\n## [Contexto Sociohistórico Corto de la Partida]\\n### [Estación del año y clima inicial]\\n### **Día 1 — 08:00 (Mañana)**\\n\\n[Prosa narrativa inmersiva y de bienvenida de 3 a 5 párrafos cortos de 1 a 3 frases cada uno, separados por doble salto de línea, introduciendo al héroe, dónde se encuentra físicamente, la atmósfera de las calles, la situación social/política de la ciudad y el contexto inicial de su trasfondo. Diálogos en cursiva y con guiones largos].\\n\\n---\\n\\n## Estado\\n* 🪙 Dinero: **[Dinero inicial del personaje en negrita]**\\n* 🥖 Comida: **Suficiente para empezar**\\n* 🏡 Refugio/Vivienda: **Estable**\\n\\n### Nota del Director\\n[Breve nota de bienvenida del Master]",
   "suggestedActions": ["Título Opción A", "Título Opción B", "Título Opción C", "Título Opción D"],
   "currentLocation": "Nombre de la Ciudad o Ubicación de Inicio",
-  "locationImagePrompt": "Descriptive English prompt of the starting location and city to generate an image with DALL-E, style Anime One Piece: vibrant, detailed.",
+  "locationImagePrompt": "Highly descriptive English prompt of the starting scene for DALL-E 3. It MUST explicitly incorporate: the starting city, the specific starting sub-location/district (e.g. narrow dirty alleyway), the starting weather (e.g. pouring rain), the starting season (e.g. late autumn), and the time of day (e.g. early morning). Style Anime One Piece: vibrant, colorful, detailed shading, clean anime outlines.",
   "memorySummaryUpdate": "Un párrafo corto que resuma la situación inicial del personaje en esta ubicación y su contexto (servirá como base permanente de memoria para la crónica histórica acumulada)",
   "changes": {
     "worldClimate": "Clima de inicio (ej: Soleado, Nublado, Nevando)",
@@ -1150,7 +1150,7 @@ OTRAS REGLAS DE SIMULACIÓN:
   "narrative": "Escribe tu respuesta narrada en Markdown rico adoptando estrictamente la estética de las partidas de rol de ChatGPT. Debes seguir exactamente la siguiente estructura de formato en tu texto:\n\n# [NOMBRE DE LA UBICACIÓN / MUNDO EN MAYÚSCULAS]\n## [Año, Época o Momento Histórico de la partida]\n### [Estación del año y clima actual]\n### **[Momento del día o hora] — [Nombre del interlocutor/lugar secundario si aplica (ej: Atardecer — Monna Alessa)]**\n\n[Prosa narrativa inmersiva y de diálogos en párrafos cortos de 1 a 3 frases, separados por doble salto de línea. Diálogos en cursiva y con guiones largos, ej: —«Tienes mejor cara de hambre...»]\n\n**Tirada oculta**\n[Habilidad/Atributo evaluado, ej: Lectura social + credibilidad]\nResultado: [Resultado final del d20 + modificadores] — [Detalle cualitativo del éxito/fallo]\n\n## Resultado\n[Detalla en secciones numeradas qué consigue/pierde el personaje en base al éxito o fallo, ej:]\n1. [Logro 1, ej: Comida barata]\n2. [Logro 2, ej: Información útil]\n3. [Logro 3, ej: Advertencia]\n\n## Consecuencias\n* [Consecuencia física/narrativa 1, ej: ganas pista real, pierdes algo de dinero]\n* [Consecuencia física/narrativa 2, ej: fatiga/hambre mitigada o aumentada]\n\n---\n\n## Estado\n* 🪙 Dinero: **[Dinero actual en negrita, ej: 1 soldo, 8 quattrini]**\n* 🥖 Comida: **[Comida/Recursos actuales, ej: 1 cebolla]**\n* ⚡ Fatiga: **[Nivel cualitativo de fatiga, ej: muy alta]**\n* 🍖 Hambre: **[Nivel cualitativo de hambre, ej: alta, algo mitigada]**\n* ⚠️ Situación/Amenazas: [Resumen de la situación inmediata, ej: opción real de dormir bajo techo]\n\n### Nota del Director\n[Nota corta con explicaciones del lore, consejos o advertencias narrativas sobre el futuro de las decisiones]",
   "suggestedActions": ["Propuesta A (Contextual e inmediata)", "Propuesta B", "Propuesta C", "Propuesta D"],
   "currentLocation": "Lugar actual (corto)",
-  "locationImagePrompt": "Prompt en inglés descriptivo del lugar actual para generar una imagen con DALL-E, estilo Anime One Piece: vibrante, colorido, detallado.",
+  "locationImagePrompt": "Highly descriptive English prompt of the current scene for DALL-E 3. It MUST explicitly incorporate: the city, the specific sub-location/part of the city (e.g. inside a dim tavern with flickering candles), the current weather (e.g. snowing heavily), the current season (e.g. winter), and the time of day (e.g. late evening). Style Anime One Piece: vibrant, colorful, detailed shading, clean anime outlines.",
   "changes": {
     "physical": { "health": 0, "fatigue": 0, "hunger": 0, "mental": 0 }, 
     "wealth": { "money": 0, "income": 0, "expenses": 0, "debts": 0 }, 
@@ -1422,7 +1422,7 @@ Genera el JSON de respuesta con el desenlace narrativo literario y extenso.`;
         speakText(parsed.narrative, nextCampaign.turn);
       }
 
-      if (locationChanged && parsed.locationImagePrompt) {
+      if (parsed.locationImagePrompt) {
         triggerImageGeneration(nextCampaign, parsed.locationImagePrompt);
       }
 
