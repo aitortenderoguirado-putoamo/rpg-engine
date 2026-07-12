@@ -235,6 +235,14 @@ export default function App() {
   const [wizardSelectedSkills, setWizardSelectedSkills] = useState([]);
   const [wizardDifficulty, setWizardDifficulty] = useState("medium");
   const [wizardTimeScale, setWizardTimeScale] = useState("moment");
+  const [wizardGold, setWizardGold] = useState(100);
+  const [wizardInventory, setWizardInventory] = useState([]);
+  
+  // Form fields for adding new custom starting items
+  const [newItemName, setNewItemName] = useState("");
+  const [newItemQty, setNewItemQty] = useState(1);
+  const [newItemCat, setNewItemCat] = useState("Utilidad");
+  const [newItemValue, setNewItemValue] = useState(0);
 
   // Game UI State
   const [activeTab, setActiveTab] = useState("personaje");
@@ -387,6 +395,8 @@ export default function App() {
       setWizardAttrs({ ...arch.attrs });
       setWizardAttrPool(5);
       setWizardSelectedSkills(arch.skills.map(s => s.name));
+      setWizardGold(arch.gold || 100);
+      setWizardInventory(arch.items ? JSON.parse(JSON.stringify(arch.items)) : []);
     }
   }, [wizardArchetype]);
 
@@ -416,8 +426,8 @@ export default function App() {
       return { name: skillName, level: baseSkill ? baseSkill.level : 1 };
     });
 
-    const initialInventory = [...(arch?.items || [])];
-    const initialGold = arch?.gold || 100;
+    const initialInventory = [...wizardInventory];
+    const initialGold = wizardGold;
 
     let worldNameStr = WORLDS.find(w => w.id === wizardWorld)?.name || "";
     let regionStr = "";
@@ -1935,8 +1945,160 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
               </div>
             )}
 
-            {/* STEP 5 */}
+            {/* STEP 5: CUSTOM INVENTORY & GOLD */}
             {wizardStep === 5 && (
+              <div>
+                <h3 style={{ fontFamily: "var(--font-title)", fontSize: "1.1rem", marginBottom: "15px", color: "var(--text-secondary)" }}>
+                  Personaliza tu Oro e Inventario Inicial
+                </h3>
+
+                {/* Starting Gold */}
+                <div className="glass-panel" style={{ padding: "15px", marginBottom: "20px" }}>
+                  <label style={{ display: "block", fontSize: "0.9rem", color: "var(--text-primary)", marginBottom: "6px", fontWeight: "600" }}>
+                    🪙 Oro / Dinero Inicial:
+                  </label>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <input 
+                      type="number" 
+                      value={wizardGold} 
+                      onChange={(e) => setWizardGold(Math.max(0, parseInt(e.target.value, 10) || 0))} 
+                      style={{ width: "120px", fontSize: "1.1rem", fontWeight: "700", textAlign: "center" }}
+                    />
+                    <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>monedas / recursos de inicio.</span>
+                  </div>
+                </div>
+
+                {/* Starting Inventory List */}
+                <div className="glass-panel" style={{ padding: "15px", marginBottom: "20px" }}>
+                  <h4 style={{ fontSize: "0.9rem", fontWeight: "600", color: "var(--text-primary)", marginBottom: "12px", borderBottom: "1px solid var(--card-border)", paddingBottom: "6px" }}>
+                    🎒 Objetos en Mochila:
+                  </h4>
+
+                  {wizardInventory.length === 0 ? (
+                    <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontStyle: "italic" }}>Tu mochila está vacía.</p>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "200px", overflowY: "auto", paddingRight: "5px" }}>
+                      {wizardInventory.map((item, idx) => (
+                        <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px", background: "var(--panel-bg-hover)", borderRadius: "6px", border: "1px solid var(--border-subtle)" }}>
+                          <div>
+                            <strong style={{ color: "var(--text-primary)", fontSize: "0.85rem" }}>{item.name}</strong>
+                            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginLeft: "8px" }}>({item.cat}) — Valor: {item.value || 0} c/u</span>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <button 
+                                onClick={() => {
+                                  const updated = [...wizardInventory];
+                                  updated[idx].qty = Math.max(1, updated[idx].qty - 1);
+                                  setWizardInventory(updated);
+                                }}
+                                style={{ width: "24px", height: "24px", padding: 0, fontSize: "0.8rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                              >
+                                -
+                              </button>
+                              <span style={{ minWidth: "20px", textAlign: "center", fontSize: "0.85rem", fontWeight: "700", color: "var(--text-primary)" }}>{item.qty}</span>
+                              <button 
+                                onClick={() => {
+                                  const updated = [...wizardInventory];
+                                  updated[idx].qty += 1;
+                                  setWizardInventory(updated);
+                                }}
+                                style={{ width: "24px", height: "24px", padding: 0, fontSize: "0.8rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                              >
+                                +
+                              </button>
+                            </div>
+                            <button 
+                              onClick={() => {
+                                setWizardInventory(wizardInventory.filter((_, i) => i !== idx));
+                              }}
+                              style={{ padding: "4px 8px", background: "rgba(239, 68, 68, 0.15)", border: "1px solid var(--color-fail)", color: "var(--color-fail)", borderRadius: "4px", fontSize: "0.75rem", cursor: "pointer" }}
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Add Custom Item Panel */}
+                <div className="glass-panel" style={{ padding: "15px", marginBottom: "20px" }}>
+                  <h4 style={{ fontSize: "0.85rem", fontWeight: "600", color: "var(--text-secondary)", marginBottom: "10px" }}>
+                    ➕ Añadir Objeto Personalizado:
+                  </h4>
+                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: "8px", alignItems: "end" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "4px" }}>Nombre del Objeto:</label>
+                      <input 
+                        type="text" 
+                        value={newItemName} 
+                        onChange={(e) => setNewItemName(e.target.value)}
+                        placeholder="Ej: Brújula Dorada"
+                        style={{ width: "100%", padding: "6px" }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "4px" }}>Cantidad:</label>
+                      <input 
+                        type="number" 
+                        value={newItemQty} 
+                        onChange={(e) => setNewItemQty(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                        style={{ width: "100%", padding: "6px" }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "4px" }}>Categoría:</label>
+                      <select 
+                        value={newItemCat} 
+                        onChange={(e) => setNewItemCat(e.target.value)}
+                        style={{ width: "100%", padding: "6px", fontSize: "0.75rem", background: "var(--input-bg)", color: "var(--text-primary)", border: "1px solid var(--border-subtle)", borderRadius: "4px" }}
+                      >
+                        <option value="Arma">Arma ⚔️</option>
+                        <option value="Defensa">Defensa 🛡️</option>
+                        <option value="Comida">Comida 🥖</option>
+                        <option value="Herramienta">Herramienta 🛠️</option>
+                        <option value="Utilidad">Utilidad ⚙️</option>
+                        <option value="Libro">Libro 📚</option>
+                        <option value="Reliquia">Reliquia 💎</option>
+                      </select>
+                    </div>
+                    <div>
+                      <button 
+                        onClick={() => {
+                          if (!newItemName.trim()) return;
+                          setWizardInventory(prev => [
+                            ...prev, 
+                            { name: newItemName.trim(), qty: newItemQty, cat: newItemCat, value: newItemValue }
+                          ]);
+                          setNewItemName("");
+                          setNewItemQty(1);
+                          setNewItemValue(0);
+                        }}
+                        disabled={!newItemName.trim()}
+                        style={{ padding: "8px", width: "100%", background: "var(--accent-gradient)", color: "#fff", border: "none", borderRadius: "4px", fontSize: "0.8rem", cursor: "pointer", fontWeight: "600" }}
+                      >
+                        Añadir
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <button onClick={() => setWizardStep(4)} style={{ padding: "10px 20px" }}>Atrás</button>
+                  <button 
+                    onClick={() => setWizardStep(6)}
+                    style={{ padding: "10px 20px", background: "var(--accent-gradient)", color: "#fff", border: "none", borderRadius: "6px", fontWeight: "600" }}
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 6 */}
+            {wizardStep === 6 && (
               <div>
                 <h3 style={{ fontFamily: "var(--font-title)", fontSize: "1.1rem", marginBottom: "15px", color: "var(--text-secondary)" }}>
                   Elige el Nivel de Dificultad:
@@ -1961,9 +2123,9 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <button onClick={() => setWizardStep(4)} style={{ padding: "10px 20px" }}>Atrás</button>
+                  <button onClick={() => setWizardStep(5)} style={{ padding: "10px 20px" }}>Atrás</button>
                   <button 
-                    onClick={() => setWizardStep(6)}
+                    onClick={() => setWizardStep(7)}
                     style={{ padding: "10px 20px", background: "var(--accent-gradient)", color: "#fff", border: "none", borderRadius: "6px", fontWeight: "600" }}
                   >
                     Siguiente
@@ -1972,8 +2134,8 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
               </div>
             )}
 
-            {/* STEP 6 */}
-            {wizardStep === 6 && (
+            {/* STEP 7 */}
+            {wizardStep === 7 && (
               <div>
                 <h3 style={{ fontFamily: "var(--font-title)", fontSize: "1.1rem", marginBottom: "15px", color: "var(--text-secondary)" }}>
                   Escala de Tiempo de la Partida:
@@ -2006,7 +2168,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 )}
 
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <button onClick={() => setWizardStep(5)} style={{ padding: "10px 20px" }}>Atrás</button>
+                  <button onClick={() => setWizardStep(6)} style={{ padding: "10px 20px" }}>Atrás</button>
                   <button 
                     onClick={handleStartCampaign}
                     style={{ padding: "10px 20px", background: "var(--accent-gradient)", color: "#fff", border: "none", borderRadius: "6px", fontWeight: "700", boxShadow: "var(--accent-glow)" }}
