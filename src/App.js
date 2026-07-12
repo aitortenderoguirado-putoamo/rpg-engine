@@ -241,6 +241,7 @@ export default function App() {
     return val === null ? false : val === "true";
   });
   const [speakingTurnNum, setSpeakingTurnNum] = useState(null);
+  const [currentTurnRollString, setCurrentTurnRollString] = useState("");
 
   const [campaigns, setCampaigns] = useState([]);
   const [currentCampaign, setCurrentCampaign] = useState(null);
@@ -1066,7 +1067,6 @@ Genera el JSON de respuesta con la introducción de inicio de la campaña, la ci
       return;
     }
 
-    setIsRolling(true);
     setIsLlmLoading(true);
 
     let nextCampaign = { ...currentCampaign };
@@ -1097,8 +1097,15 @@ Genera el JSON de respuesta con la introducción de inicio de la campaña, la ci
       rollInfo = calculateDiceRoll(actionText, nextCampaign);
       setLastDiceRoll(rollInfo);
       rollString = `🎲 ${rollInfo.total} (d20:${rollInfo.base}${rollInfo.modifiers.map(m => ` ${m.val >= 0 ? `+${m.val}` : m.val}(${m.name.split(" ")[0]})`).join("")}) vs DC${rollInfo.dc} ➔ ${rollInfo.status}`;
+      setCurrentTurnRollString(rollString);
+      setIsRolling(true);
+      setTimeout(() => {
+        setIsRolling(false);
+      }, 700);
     } else {
       setLastDiceRoll(null);
+      setCurrentTurnRollString("");
+      setIsRolling(false);
     }
 
     // 4. Progress Date
@@ -1466,6 +1473,7 @@ Genera el JSON de respuesta con el desenlace narrativo literario y extenso.`;
       setIsRolling(false);
       setIsLlmLoading(false);
       setLastDiceRoll(null);
+      setCurrentTurnRollString("");
     }
   };
 
@@ -2557,15 +2565,29 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 ))}
 
                 {isRolling && (
-                  <div style={{ textAlign: "center", padding: "20px" }}>
-                    <span style={{ fontSize: "2rem" }} className="animate-dice">🎲</span>
-                    <p style={{ fontSize: "0.9rem", color: "var(--accent-primary)", marginTop: "8px", fontWeight: "600" }}>
-                      Tirando dado d20 y calculando modificadores...
-                    </p>
-                  </div>
-                )}
+                   <div style={{ textAlign: "center", padding: "15px", background: "rgba(168,85,247,0.03)", borderRadius: "8px", border: "1px dashed var(--accent-primary)", marginBottom: "10px" }}>
+                     <span style={{ fontSize: "1.8rem", display: "inline-block" }} className="animate-dice">🎲</span>
+                     <p style={{ fontSize: "0.85rem", color: "var(--accent-primary)", marginTop: "6px", fontWeight: "600" }}>
+                       Tirando dado...
+                     </p>
+                   </div>
+                 )}
 
-                {!isRolling && currentCampaign.log.length === 0 && (
+                 {isLlmLoading && !isRolling && (
+                   <div style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "12px", background: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px solid var(--border-subtle)", marginBottom: "10px" }}>
+                     {currentTurnRollString && (
+                       <div style={{ fontSize: "0.8rem", fontFamily: "monospace", color: "var(--accent-secondary)", display: "flex", alignItems: "center", gap: "6px" }}>
+                         <span>{currentTurnRollString}</span>
+                       </div>
+                     )}
+                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                       <span style={{ fontSize: "0.9rem" }}>✍️</span>
+                       <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: "500" }}>El Master está narrando en ChatGPT...</span>
+                     </div>
+                   </div>
+                 )}
+
+                {!isRolling && currentCampaign.log.length === 0 && !isLlmLoading && (
                   <div className="chat-bubble master-bubble">
                     <div className="master-bubble-content">
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", borderBottom: "1px solid rgba(255,255,255,0.04)", paddingBottom: "4px" }}>
