@@ -274,6 +274,7 @@ const CoinDisplay = ({ coppers, style }) => {
 export default function App() {
   // --- STATE VARIABLES ---
   const [apiKey, setApiKey] = useState(() => localStorage.getItem("openai_api_key") || "");
+  const [apiModel, setApiModel] = useState(() => localStorage.getItem("rpg_api_model") || "gpt-4o-mini");
   const [supabaseUrl, setSupabaseUrl] = useState(() => localStorage.getItem("supabase_url") || DEFAULT_SUPABASE_URL);
   const [supabaseKey, setSupabaseKey] = useState(() => localStorage.getItem("supabase_key") || DEFAULT_SUPABASE_KEY);
   const [isDiceRollEnabled, setIsDiceRollEnabled] = useState(() => {
@@ -937,7 +938,7 @@ Genera el JSON de respuesta con la introducción de inicio de la campaña, la ci
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: apiModel,
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: systemPrompt },
@@ -1632,6 +1633,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
   // --- SAVE SETTINGS (⚙) ---
   const handleSaveSettings = () => {
     localStorage.setItem("openai_api_key", apiKey);
+    localStorage.setItem("rpg_api_model", apiModel);
     localStorage.setItem("supabase_url", supabaseUrl);
     localStorage.setItem("supabase_key", supabaseKey);
     alert("Configuración guardada correctamente.");
@@ -1816,6 +1818,26 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 </span>
               </div>
 
+              <div>
+                <label style={{ display: "block", fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "8px", fontWeight: "500" }}>
+                  Modelo de Inteligencia Artificial (IA)
+                </label>
+                <select 
+                  value={apiModel} 
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setApiModel(val);
+                    localStorage.setItem("rpg_api_model", val);
+                  }}
+                  style={{ width: "100%", padding: "8px", background: "var(--input-bg)", color: "var(--text-primary)", border: "1px solid var(--border-subtle)", borderRadius: "6px", fontSize: "0.9rem" }}
+                >
+                  <option value="gpt-4o-mini">gpt-4o-mini (Recomendado - Ultra rápido y económico)</option>
+                  <option value="gpt-4o">gpt-4o (Calidad Suprema - Prosa excelente, más lento)</option>
+                </select>
+                <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "4px", display: "block" }}>
+                  El modelo gpt-4o-mini es hasta 4 veces más rápido que gpt-4o y consume mucha menos cuota de API.
+                </span>
+              </div>
               <div>
                 <label style={{ display: "block", fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "8px", fontWeight: "500" }}>
                   Supabase Project URL
