@@ -1259,16 +1259,20 @@ OTRAS REGLAS DE SIMULACIÓN:
 5. Si ocurre un evento histórico o hito de la campaña, agrégalo a "keyEventToAdd" (diario de eventos).
 6. Si la salud del personaje llega a 0, pon "isDead" en true y explica cómo murió en "deathMessage".
 7. Patrimonio y Finanzas: Puedes añadir o quitar propiedades en "propertiesAdd" / "propertiesRemove" y negocios en "businessesAdd" / "businessesRemove" si la narrativa lo justifica.
-7. Clima y Estación: Puedes cambiar dinámicamente el clima en "worldClimate" (ej: 'Tormenta de nieve', 'Soleado') y la estación del año en "worldSeason" (ej: 'Invierno', 'Primavera') según progrese la historia.
-8. Transcurso del Tiempo (PROPORCIONAL Y DINÁMICO): Si la escala temporal es "moment", la hora actual tiene el formato "Día X, HH:MM" (ej: "Día 1, 08:00"). TÚ debes calcular el tiempo que tardan la acción propuesta por el jugador de forma realista y proporcional. Si la acción es extremadamente breve (ej: hacer una pregunta rápida, mirar una sala, escribir una nota, desenvainar), avanza solo de 2 a 10 minutos. Si es intermedia (ej: un combate corto, explorar a fondo un templo), avanza 30 minutos o 1 hora. Si es prolongada (ej: viajar a pie, acampar, dormir), avanza varias horas o un día. Devuelve la nueva fecha en "changes.temporal.date" (ej: "Día 1, 08:05").
-9. Propuestas de Acción (suggestedActions): Deben corresponder estrictamente al contexto geográfico/narrativo actual, el momento del día actual (ej: noche requiere sigilo/refugio/antorchas), el clima/estación del año (ej: invierno requiere calentarse/buscar abrigo), y las necesidades físicas (salud baja requiere descanso/curación). Evita opciones genéricas y aburridas.
-10. CONTROL DE ALUCINACIONES Y BUCLES: Evita por completo la redundancia de adjetivos, listas interminables, repeticiones obsesivas de sinónimos o declinaciones latinas extrañas. Cada punto de la lista numerada "Resultado" y cada viñeta en "Consecuencias" del JSON de respuesta debe ser conciso, directo y tener una longitud máxima de 10 a 20 palabras.
-11. Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
+8. Clima y Estación: Puedes cambiar dinámicamente el clima en "worldClimate" (ej: 'Tormenta de nieve', 'Soleado') y la estación del año en "worldSeason" (ej: 'Invierno', 'Primavera') según progrese la historia.
+9. Transcurso del Tiempo (PROPORCIONAL Y DINÁMICO): Si la escala temporal es "moment", la hora actual tiene el formato "Día X, HH:MM" (ej: "Día 1, 08:00"). TÚ debes calcular el tiempo que tardan la acción propuesta por el jugador de forma realista y proporcional. Si la acción es extremadamente breve (ej: hacer una pregunta rápida, mirar una sala, escribir una nota, desenvainar), avanza solo de 2 a 10 minutos. Si es intermedia (ej: un combate corto, explorar a fondo un templo), avanza 30 minutos o 1 hora. Si es prolongada (ej: viajar a pie, acampar, dormir), avanza varias horas o un día. Devuelve la nueva fecha en "changes.temporal.date" (ej: "Día 1, 08:05").
+10. Propuestas de Acción (suggestedActions): Deben corresponder estrictamente al contexto geográfico/narrativo actual, el momento del día actual (ej: noche requiere sigilo/refugio/antorchas), el clima/estación del año (ej: invierno requiere calentarse/buscar abrigo), y las necesidades físicas (salud baja requiere descanso/curación). Evita opciones genéricas y aburridas.
+11. MODIFICADOR SEMÁNTICO DE PLAN / ACCIÓN: Evalúa críticamente la sensatez e ingenio de la acción escrita por el jugador en su situación actual. Si es un plan inteligente, táctico o astuto: devuelve en el JSON principal "planModifier" con un valor positivo de +1 a +4, y explica la razón en "planModifierReason" (ej: "Aprovechar la cobertura alta"). Si es un plan temerario, insensato o absurdo: devuelve "planModifier" con un valor negativo de -1 a -4 y explica la razón en "planModifierReason" (ej: "Ir de frente sin escudo"). Si es neutro: devuelve "planModifier": 0 y "planModifierReason": "".
+12. RASGOS DINÁMICOS DEL PERSONAJE: Los rasgos son marcas permanentes del alma del personaje que se adquieren o pierden por sus experiencias y aventuras, NO por compra. Si la narrativa justifica ganar un nuevo rasgo positivo (ej: una hazaña notable, superar un trauma, adquirir una reputación), agrégalo en "traitsAdd". Si la narrativa justifica perder un rasgo (ej: traición, herida grave que cambia al personaje, muerte simbólica de una creencia), agrégalo en "traitsRemove". Usa los rasgos con sobriedad: máximo 1 cambio por turno, y solo cuando el acontecimiento narrativo lo justifique plenamente.
+13. CONTROL DE ALUCINACIONES Y BUCLES: Evita por completo la redundancia de adjetivos, listas interminables, repeticiones obsesivas de sinónimos o declinaciones latinas extrañas. Cada punto de la lista numerada "Resultado" y cada viñeta en "Consecuencias" del JSON de respuesta debe ser conciso, directo y tener una longitud máxima de 10 a 20 palabras.
+14. Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
 {
   "narrative": "Escribe tu respuesta narrada en Markdown rico adoptando estrictamente la estética de las partidas de rol de ChatGPT. Debes seguir exactamente la siguiente estructura de formato en tu texto:\n\n# [NOMBRE DE LA UBICACIÓN / MUNDO EN MAYÚSCULAS]\n## [Año, Época o Momento Histórico de la partida]\n### [Estación del año y clima actual]\n### **[Momento del día o hora] — [Nombre del interlocutor/lugar secundario si aplica (ej: Atardecer — Monna Alessa)]**\n\n[Prosa narrativa inmersiva y de diálogos en párrafos cortos de 1 a 3 frases, separados por doble salto de línea. Diálogos en cursiva y con guiones largos, ej: —«Tienes mejor cara de hambre...»]\n\n**Tirada oculta**\n[Habilidad/Atributo evaluado, ej: Lectura social + credibilidad]\nResultado: [Resultado final del d20 + modificadores] — [Detalle cualitativo del éxito/fallo]\n\n## Resultado\n[Detalla en secciones numeradas qué consigue/pierde el personaje en base al éxito o fallo, ej:]\n1. [Logro 1, ej: Comida barata]\n2. [Logro 2, ej: Información útil]\n3. [Logro 3, ej: Advertencia]\n\n## Consecuencias\n* [Consecuencia física/narrativa 1, ej: ganas pista real, pierdes algo de dinero]\n* [Consecuencia física/narrativa 2, ej: fatiga/hambre mitigada o aumentada]\n\n---\n\n## Estado\n* 🪙 Dinero: **[Dinero actual expresado en oro, plata o cobre de forma realista. Escala: 1 oro = 1000 platas, 1 plata = 1000 cobres. Ej: 2 platas, 150 cobres (y los pobres solo tienen cobres, los ricos oros)]**\n* 🥖 Comida: **[Comida/Recursos actuales, ej: 1 cebolla]**\n* ⚡ Fatiga: **[Nivel cualitativo de fatiga, ej: muy alta]**\n* 🍖 Hambre: **[Nivel cualitativo de hambre, ej: alta, algo mitigada]**\n* ⚠️ Siutación/Amenazas: [Resumen de la situación inmediata, ej: opción real de dormir bajo techo]\n\n### Nota del Director\n[Nota corta con explicaciones del lore, consejos o advertencias narrativas sobre el futuro de las decisiones]",
   "suggestedActions": ["Propuesta A (Contextual e inmediata)", "Propuesta B", "Propuesta C", "Propuesta D"],
   "currentLocation": "Lugar actual (corto)",
   "locationImagePrompt": "Highly descriptive English prompt of the current scene for DALL-E 3. It MUST explicitly incorporate: the city, the specific sub-location/part of the city (e.g. inside a dim tavern with flickering candles), the current weather (e.g. snowing heavily), the current season (e.g. winter), and the time of day (e.g. late evening). Style Anime One Piece: vibrant, colorful, detailed shading, clean anime outlines.",
+    "planModifier": 2,
+  "planModifierReason": "Uso inteligente de la cobertura",
   "changes": {
     "physical": { "health": 0, "fatigue": 0, "hunger": 0, "mental": 0 }, 
     "wealth": { "money": 0, "income": 0, "expenses": 0, "debts": 0 }, 
@@ -1285,6 +1289,8 @@ OTRAS REGLAS DE SIMULACIÓN:
     "worldSeason": "Nueva estación del año si cambia (opcional)",
     "temporal": { "date": "nueva fecha si aplica (opcional)" },
     "skillsImproved": [],
+    "traitsAdd": ["Nuevo Rasgo Ganado por Experiencia"],
+    "traitsRemove": ["Rasgo Perdido por Experiencia"],
     "attrChanges": {} 
   },
   "npcPortraitPrompts": { "NombrePNJ": "Prompt en inglés para el retrato, estilo Anime One Piece, 1:1." },
@@ -1486,9 +1492,34 @@ Genera el JSON de respuesta con el desenlace narrativo literario y extenso.`;
           changes.skillsImproved.forEach(skillName => {
             const idx = nextCampaign.character.skills.findIndex(s => s.name.toLowerCase() === skillName.toLowerCase());
             if (idx !== -1) {
-              nextCampaign.character.skills[idx].level = Math.min(10, nextCampaign.character.skills[idx].level + 1);
+              nextCampaign.character.skills[idx].level = Math.min(100, nextCampaign.character.skills[idx].level + 1);
             } else {
               nextCampaign.character.skills.push({ name: skillName, level: 1 });
+            }
+          });
+        }
+
+        // Dynamic Traits: add or remove based on narrative experience
+        if (changes.traitsAdd && changes.traitsAdd.length > 0) {
+          changes.traitsAdd.forEach(trait => {
+            if (!nextCampaign.character.traits.includes(trait)) {
+              nextCampaign.character.traits.push(trait);
+              nextCampaign.memory.keyEvents.push({
+                date: nextCampaign.temporal.date,
+                desc: `Nuevo rasgo adquirido por experiencia: "${trait}" 🌟`
+              });
+            }
+          });
+        }
+        if (changes.traitsRemove && changes.traitsRemove.length > 0) {
+          changes.traitsRemove.forEach(trait => {
+            const idx = nextCampaign.character.traits.indexOf(trait);
+            if (idx !== -1) {
+              nextCampaign.character.traits.splice(idx, 1);
+              nextCampaign.memory.keyEvents.push({
+                date: nextCampaign.temporal.date,
+                desc: `Rasgo perdido por las vicisitudes de la vida: "${trait}" 💔`
+              });
             }
           });
         }
@@ -1504,7 +1535,7 @@ Genera el JSON de respuesta con el desenlace narrativo literario y extenso.`;
             if (Math.random() < upgradeChance) {
               const sIdx = nextCampaign.character.skills.findIndex(s => s.name.toLowerCase() === skillName.toLowerCase());
               if (sIdx !== -1) {
-                if (nextCampaign.character.skills[sIdx].level < 5) {
+                if (nextCampaign.character.skills[sIdx].level < 100) {
                   nextCampaign.character.skills[sIdx].level += 1;
                   nextCampaign.memory.keyEvents.push({
                     date: nextCampaign.temporal.date,
@@ -1521,6 +1552,16 @@ Genera el JSON de respuesta con el desenlace narrativo literario y extenso.`;
               }
             }
           }
+        }
+
+        // Apply planModifier from LLM to rollInfo total (retroactively update display)
+        if (rollInfo && parsed.planModifier && parsed.planModifier !== 0) {
+          const pm = parsed.planModifier;
+          rollInfo.modifiers.push({ name: `Plan (${parsed.planModifierReason || "Evaluado"})`, val: pm });
+          // Update the displayed roll string
+          const updatedRollString = `🎲 ${rollInfo.total + pm} (d20:${rollInfo.base}${rollInfo.modifiers.map(m => ` ${m.val >= 0 ? `+${m.val}` : m.val}(${m.name.split(" ")[0]})`).join("")}) vs DC${rollInfo.dc} ➔ ${(rollInfo.total + pm) >= rollInfo.dc ? "Éxito" : rollInfo.status}`;
+          setCurrentTurnRollString(updatedRollString);
+          setLastDiceRoll({ ...rollInfo, total: rollInfo.total + pm });
         }
 
         if (changes.attrChanges) {
@@ -3153,28 +3194,36 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                     </div>
 
                     <div style={{ marginBottom: "10px" }}>
-                      <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "block", marginBottom: "4px" }}>Habilidades de Campaña:</span>
-                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                      <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "block", marginBottom: "6px" }}>Habilidades de Campaña <span style={{ color: "var(--accent-primary)" }}>(máx. 100):</span></span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                         {currentCampaign.character.skills.length === 0 ? (
                           <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Ninguna habilidad adquirida aún.</span>
                         ) : (
                           currentCampaign.character.skills.map((s, idx) => (
-                            <span key={idx} style={{ fontSize: "0.75rem", background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", padding: "2px 8px", borderRadius: "12px", color: "var(--accent-primary)" }}>
-                              {s.name} nv{s.level}
-                            </span>
+                            <div key={idx} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <span style={{ fontSize: "0.72rem", color: "var(--text-primary)", minWidth: "90px" }}>{s.name}</span>
+                              <div style={{ flex: 1, background: "rgba(255,255,255,0.05)", borderRadius: "4px", height: "6px", overflow: "hidden" }}>
+                                <div style={{ width: `${s.level}%`, height: "100%", background: s.level >= 80 ? "var(--color-success)" : s.level >= 50 ? "var(--accent-primary)" : "rgba(168,85,247,0.5)", borderRadius: "4px", transition: "width 0.4s ease" }} />
+                              </div>
+                              <span style={{ fontSize: "0.7rem", color: "var(--accent-primary)", minWidth: "32px", textAlign: "right", fontWeight: "700" }}>{s.level}/100</span>
+                            </div>
                           ))
                         )}
                       </div>
                     </div>
 
                     <div>
-                      <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "block", marginBottom: "4px" }}>Rasgos:</span>
+                      <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "block", marginBottom: "6px" }}>Rasgos <span style={{ fontSize: "0.65rem", color: "var(--text-muted)" }}>(cambian con tus experiencias):</span></span>
                       <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                        {currentCampaign.character.traits.map((t, idx) => (
-                          <span key={idx} style={{ fontSize: "0.75rem", background: "var(--panel-bg-hover)", border: "1px solid var(--card-border)", padding: "2px 8px", borderRadius: "12px", color: "var(--text-primary)" }}>
-                            {t}
-                          </span>
-                        ))}
+                        {currentCampaign.character.traits.length === 0 ? (
+                          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Aún sin rasgos forjados por la experiencia.</span>
+                        ) : (
+                          currentCampaign.character.traits.map((t, idx) => (
+                            <span key={idx} style={{ fontSize: "0.72rem", background: t.startsWith("-") ? "rgba(239,68,68,0.1)" : "rgba(168,85,247,0.08)", border: `1px solid ${t.startsWith("-") ? "rgba(239,68,68,0.3)" : "var(--card-border)"}`, padding: "3px 10px", borderRadius: "12px", color: t.startsWith("-") ? "var(--color-fail)" : "var(--text-primary)", display: "flex", alignItems: "center", gap: "4px" }}>
+                              {t.startsWith("-") ? "💔" : "🌟"} {t.replace(/^[-+]/, "").trim()}
+                            </span>
+                          ))
+                        )}
                       </div>
                     </div>
                   </div>
