@@ -288,6 +288,7 @@ export default function App() {
   const [speakingTurnNum, setSpeakingTurnNum] = useState(null);
   const [currentTurnRollString, setCurrentTurnRollString] = useState("");
   const [previousCampaignState, setPreviousCampaignState] = useState(null);
+  const [mobileActiveTab, setMobileActiveTab] = useState("narrativa");
 
   const [campaigns, setCampaigns] = useState([]);
   const [currentCampaign, setCurrentCampaign] = useState(null);
@@ -2636,7 +2637,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
           </div>
 
           {/* Collapsible Flex Layout */}
-          <div className="game-container-flex" style={{ gap: isSidebarOpen ? "20px" : "0px" }}>
+          <div className={`game-container-flex mobile-view-${mobileActiveTab === "narrativa" ? "narrativa" : "sidebar"}`} style={{ gap: isSidebarOpen ? "20px" : "0px" }}>
             
             {/* Left Column: Narrative Box & Actions (Chat ChatGPT Style) */}
             <div className={`main-narrative-area ${!isSidebarOpen ? "expanded" : ""}`}>
@@ -3426,6 +3427,61 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
 
             </div>
 
+          </div>
+
+          {/* Sticky Bottom Nav Bar for Mobile Portrait */}
+          <div className="mobile-bottom-nav">
+            <button 
+              className={`mobile-nav-item ${mobileActiveTab === "narrativa" ? "active" : ""}`}
+              onClick={() => setMobileActiveTab("narrativa")}
+            >
+              <span className="mobile-nav-icon">💬</span>
+              <span>Jugar</span>
+            </button>
+            <button 
+              className={`mobile-nav-item ${mobileActiveTab === "personaje" ? "active" : ""}`}
+              onClick={() => {
+                setMobileActiveTab("personaje");
+                setActiveTab("personaje");
+                setIsSidebarOpen(true);
+              }}
+            >
+              <span className="mobile-nav-icon">👤</span>
+              <span>Ficha</span>
+            </button>
+            <button 
+              className={`mobile-nav-item ${mobileActiveTab === "inventario" ? "active" : ""}`}
+              onClick={() => {
+                setMobileActiveTab("inventario");
+                setActiveTab("inventario");
+                setIsSidebarOpen(true);
+              }}
+            >
+              <span className="mobile-nav-icon">🎒</span>
+              <span>Mochila</span>
+            </button>
+            <button 
+              className={`mobile-nav-item ${mobileActiveTab === "diario" ? "active" : ""}`}
+              onClick={() => {
+                setMobileActiveTab("diario");
+                setActiveTab("diario");
+                setIsSidebarOpen(true);
+              }}
+            >
+              <span className="mobile-nav-icon">📜</span>
+              <span>Diario</span>
+            </button>
+            <button 
+              className={`mobile-nav-item ${mobileActiveTab === "patrimonio" ? "active" : ""}`}
+              onClick={() => {
+                setMobileActiveTab("patrimonio");
+                setActiveTab("patrimonio");
+                setIsSidebarOpen(true);
+              }}
+            >
+              <span className="mobile-nav-icon">🪙</span>
+              <span>Finanzas</span>
+            </button>
           </div>
 
           {/* 5. ADMIN CONTROL PANEL MODAL OVERLAY */}

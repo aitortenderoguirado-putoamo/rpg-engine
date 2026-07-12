@@ -201,6 +201,93 @@
       padding: 0;
     }
 
+    /* Mobile Responsive styles for vertical phone screens */
+    .mobile-bottom-nav {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .game-container-flex {
+        flex-direction: column !important;
+        gap: 0 !important;
+      }
+      
+      .mobile-view-narrativa .sidebar-panel {
+        display: none !important;
+      }
+      
+      .mobile-view-sidebar .main-narrative-area {
+        display: none !important;
+      }
+      
+      .main-narrative-area, .sidebar-panel {
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+      }
+      
+      .main-narrative-area .glass-panel {
+        height: calc(100vh - 350px) !important;
+        min-height: 400px !important;
+      }
+      
+      .sidebar-panel .glass-panel {
+        height: calc(100vh - 280px) !important;
+      }
+      
+      body {
+        padding-bottom: 75px !important;
+      }
+      
+      .mobile-bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 65px;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-top: 1px solid var(--card-border);
+        justify-content: space-around;
+        align-items: center;
+        z-index: 1000;
+        padding-bottom: env(safe-area-inset-bottom);
+        box-sizing: border-box;
+      }
+      
+      .mobile-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        color: var(--text-muted);
+        background: none;
+        border: none;
+        font-size: 0.7rem;
+        cursor: pointer;
+        padding: 5px 10px;
+        transition: color 0.2s ease;
+      }
+      
+      .mobile-nav-item.active {
+        color: var(--accent-primary);
+      }
+      
+      .mobile-nav-icon {
+        font-size: 1.2rem;
+      }
+      
+      /* Make settings and creator screens scrollable on mobile */
+      .animate-fade {
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+        padding-bottom: 80px;
+      }
+    }
+
     /* ChatGPT Chat Aesthetic bubbles */
     .chat-bubble {
       display: flex;
