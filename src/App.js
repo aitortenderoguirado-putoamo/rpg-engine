@@ -210,6 +210,11 @@ export default function App() {
     const val = localStorage.getItem("is_dice_roll_enabled");
     return val === null ? true : val === "true";
   });
+  const [isVoiceNarratorEnabled, setIsVoiceNarratorEnabled] = useState(() => {
+    const val = localStorage.getItem("is_voice_narrator_enabled");
+    return val === null ? false : val === "true";
+  });
+  const [speakingTurnNum, setSpeakingTurnNum] = useState(null);
 
   const [campaigns, setCampaigns] = useState([]);
   const [currentCampaign, setCurrentCampaign] = useState(null);
@@ -386,6 +391,62 @@ export default function App() {
         console.error("Error eliminando en Supabase:", err.message);
       }
     }
+  };
+
+  // --- VOICE SYNTHESIS (TEXT-TO-SPEECH) ENGINE ---
+  const speakText = (text, turnNum) => {
+    if (!window.speechSynthesis) {
+      alert("Tu navegador no soporta síntesis de voz (Text-to-Speech).");
+      return;
+    }
+
+    if (speakingTurnNum === turnNum) {
+      window.speechSynthesis.cancel();
+      setSpeakingTurnNum(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    // Clean text: strip markdown characters, emojis, separators
+    let cleaned = text || "";
+    cleaned = cleaned
+      .replace(/[#*`_~]/g, " ")
+      .replace(/[-+*]\s+/g, " ")
+      .replace(/[🪙🥖⚡🍖⚠️🛠️⚔️🛡️📚💎👑🎲📜🧬🧙‍♂️]/gu, "")
+      .replace(/—«/g, " ")
+      .replace(/»/g, " ")
+      .replace(/---\s*/g, " ")
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(cleaned);
+    
+    // Select Spanish voice
+    const voices = window.speechSynthesis.getVoices();
+    const esVoice = voices.find(v => v.lang.startsWith("es-ES")) || voices.find(v => v.lang.startsWith("es"));
+    if (esVoice) {
+      utterance.voice = esVoice;
+    }
+    utterance.lang = "es-ES";
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+
+    utterance.onend = () => {
+      setSpeakingTurnNum(null);
+    };
+    utterance.onerror = () => {
+      setSpeakingTurnNum(null);
+    };
+
+    setSpeakingTurnNum(turnNum);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stopSpeaking = () => {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    setSpeakingTurnNum(null);
   };
 
   // --- WIZARD AUTO SETUP ON ARCHETYPE CHANGE ---
@@ -618,6 +679,10 @@ Genera el JSON de respuesta con la introducción de inicio de la campaña, la ci
           
           const imagePrompt = parsed.locationImagePrompt || `A wide view of the starting area: ${updatedCampaign.currentLocation} in the region ${updatedCampaign.campaign.region || updatedCampaign.campaign.world}. Estilo Anime One Piece: vibrant, colorful, clean anime outline, detailed shading.`;
           triggerImageGeneration(updatedCampaign, imagePrompt);
+
+          if (isVoiceNarratorEnabled) {
+            speakText(parsed.narrative, 0);
+          }
         } catch (err) {
           console.error("Error al generar la introducción inmersiva:", err);
           // Fallback
@@ -1333,6 +1398,10 @@ Genera el JSON de respuesta con el desenlace narrativo literario y extenso.`;
       setCurrentCampaign(nextCampaign);
       setCustomAction("");
 
+      if (isVoiceNarratorEnabled) {
+        speakText(parsed.narrative, nextCampaign.turn);
+      }
+
       if (locationChanged && parsed.locationImagePrompt) {
         triggerImageGeneration(nextCampaign, parsed.locationImagePrompt);
       }
@@ -1660,6 +1729,26 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 />
                 <label htmlFor="diceRollToggle" style={{ fontSize: "0.95rem", color: "var(--text-primary)", cursor: "pointer", fontWeight: "500", userSelect: "none" }}>
                   🎲 Habilitar tiradas de dados aleatorias (d20)
+                </label>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "10px" }}>
+                <input 
+                  type="checkbox" 
+                  id="voiceNarratorToggle"
+                  checked={isVoiceNarratorEnabled}
+                  onChange={(e) => {
+                    const val = e.target.checked;
+                    setIsVoiceNarratorEnabled(val);
+                    localStorage.setItem("is_voice_narrator_enabled", String(val));
+                    if (!val) {
+                      stopSpeaking();
+                    }
+                  }}
+                  style={{ cursor: "pointer", width: "18px", height: "18px" }}
+                />
+                <label htmlFor="voiceNarratorToggle" style={{ fontSize: "0.95rem", color: "var(--text-primary)", cursor: "pointer", fontWeight: "500", userSelect: "none" }}>
+                  🔊 Habilitar narración por voz automática (Texto a Voz)
                 </label>
               </div>
             </div>
@@ -2358,7 +2447,28 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                     <div className="chat-bubble master-bubble">
                       <div className="master-bubble-content">
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", borderBottom: "1px solid rgba(255,255,255,0.04)", paddingBottom: "4px" }}>
-                          <strong style={{ color: "var(--accent-primary)", fontSize: "0.85rem" }}>🔮 MASTER (Turno {turn.turnNum || 0})</strong>
+                          <div style={{ display: "flex", alignItems: "center" }}>
+                            <strong style={{ color: "var(--accent-primary)", fontSize: "0.85rem" }}>🔮 MASTER (Turno {turn.turnNum || 0})</strong>
+                            <button
+                              onClick={() => speakText(turn.narrative, turn.turnNum || i + 1)}
+                              style={{
+                                background: "rgba(168,85,247,0.08)",
+                                border: "1px solid rgba(168,85,247,0.25)",
+                                color: speakingTurnNum === (turn.turnNum || i + 1) ? "#f43f5e" : "var(--text-secondary)",
+                                cursor: "pointer",
+                                fontSize: "0.75rem",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                marginLeft: "12px",
+                                padding: "2px 8px",
+                                borderRadius: "4px"
+                              }}
+                              title="Escuchar Narración"
+                            >
+                              {speakingTurnNum === (turn.turnNum || i + 1) ? "⏹️ Detener" : "🔊 Escuchar"}
+                            </button>
+                          </div>
                           <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>📅 {turn.date}</span>
                         </div>
                           <div 
@@ -2385,7 +2495,28 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                   <div className="chat-bubble master-bubble">
                     <div className="master-bubble-content">
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", borderBottom: "1px solid rgba(255,255,255,0.04)", paddingBottom: "4px" }}>
-                        <strong style={{ color: "var(--accent-primary)", fontSize: "0.85rem" }}>🔮 MASTER</strong>
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                          <strong style={{ color: "var(--accent-primary)", fontSize: "0.85rem" }}>🔮 MASTER</strong>
+                          <button
+                            onClick={() => speakText(currentCampaign.narrative, 0)}
+                            style={{
+                              background: "rgba(168,85,247,0.08)",
+                              border: "1px solid rgba(168,85,247,0.25)",
+                              color: speakingTurnNum === 0 ? "#f43f5e" : "var(--text-secondary)",
+                              cursor: "pointer",
+                              fontSize: "0.75rem",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              marginLeft: "12px",
+                              padding: "2px 8px",
+                              borderRadius: "4px"
+                            }}
+                            title="Escuchar Narración"
+                          >
+                            {speakingTurnNum === 0 ? "⏹️ Detener" : "🔊 Escuchar"}
+                          </button>
+                        </div>
                         <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>📅 {currentCampaign.temporal.date}</span>
                       </div>
                         <div 
