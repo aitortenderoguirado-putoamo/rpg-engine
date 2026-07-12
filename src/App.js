@@ -242,6 +242,7 @@ export default function App() {
   });
   const [speakingTurnNum, setSpeakingTurnNum] = useState(null);
   const [currentTurnRollString, setCurrentTurnRollString] = useState("");
+  const [previousCampaignState, setPreviousCampaignState] = useState(null);
 
   const [campaigns, setCampaigns] = useState([]);
   const [currentCampaign, setCurrentCampaign] = useState(null);
@@ -1054,7 +1055,7 @@ Genera el JSON de respuesta con la introducción de inicio de la campaña, la ci
   };
 
   // --- EXECUTE TURN LOGIC ---
-  const handleAction = async (actionText) => {
+  const handleAction = async (actionText, customCampaignState = null) => {
     if (!actionText.trim()) return;
     if (!apiKey) {
       alert("Introduce tu API Key en configuración (⚙) para poder jugar.");
@@ -1067,9 +1068,13 @@ Genera el JSON de respuesta con la introducción de inicio de la campaña, la ci
       return;
     }
 
+    // Guardar copia del estado previo para permitir re-roll (deshacer/regenerar)
+    const backupTarget = customCampaignState || currentCampaign;
+    setPreviousCampaignState(JSON.parse(JSON.stringify(backupTarget)));
+
     setIsLlmLoading(true);
 
-    let nextCampaign = { ...currentCampaign };
+    let nextCampaign = customCampaignState ? JSON.parse(JSON.stringify(customCampaignState)) : JSON.parse(JSON.stringify(currentCampaign));
 
     // 1. Increment Turn Counter
     nextCampaign.turn = (nextCampaign.turn || 0) + 1;
@@ -1178,7 +1183,8 @@ OTRAS REGLAS DE SIMULACIÓN:
 7. Clima y Estación: Puedes cambiar dinámicamente el clima en "worldClimate" (ej: 'Tormenta de nieve', 'Soleado') y la estación del año en "worldSeason" (ej: 'Invierno', 'Primavera') según progrese la historia.
 8. Transcurso del Tiempo (PROPORCIONAL Y DINÁMICO): Si la escala temporal es "moment", la hora actual tiene el formato "Día X, HH:MM" (ej: "Día 1, 08:00"). TÚ debes calcular el tiempo que tardan la acción propuesta por el jugador de forma realista y proporcional. Si la acción es extremadamente breve (ej: hacer una pregunta rápida, mirar una sala, escribir una nota, desenvainar), avanza solo de 2 a 10 minutos. Si es intermedia (ej: un combate corto, explorar a fondo un templo), avanza 30 minutos o 1 hora. Si es prolongada (ej: viajar a pie, acampar, dormir), avanza varias horas o un día. Devuelve la nueva fecha en "changes.temporal.date" (ej: "Día 1, 08:05").
 9. Propuestas de Acción (suggestedActions): Deben corresponder estrictamente al contexto geográfico/narrativo actual, el momento del día actual (ej: noche requiere sigilo/refugio/antorchas), el clima/estación del año (ej: invierno requiere calentarse/buscar abrigo), y las necesidades físicas (salud baja requiere descanso/curación). Evita opciones genéricas y aburridas.
-10. Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
+10. CONTROL DE ALUCINACIONES Y BUCLES: Evita por completo la redundancia de adjetivos, listas interminables, repeticiones obsesivas de sinónimos o declinaciones latinas extrañas. Cada punto de la lista numerada "Resultado" y cada viñeta en "Consecuencias" del JSON de respuesta debe ser conciso, directo y tener una longitud máxima de 10 a 20 palabras.
+11. Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
 {
   "narrative": "Escribe tu respuesta narrada en Markdown rico adoptando estrictamente la estética de las partidas de rol de ChatGPT. Debes seguir exactamente la siguiente estructura de formato en tu texto:\n\n# [NOMBRE DE LA UBICACIÓN / MUNDO EN MAYÚSCULAS]\n## [Año, Época o Momento Histórico de la partida]\n### [Estación del año y clima actual]\n### **[Momento del día o hora] — [Nombre del interlocutor/lugar secundario si aplica (ej: Atardecer — Monna Alessa)]**\n\n[Prosa narrativa inmersiva y de diálogos en párrafos cortos de 1 a 3 frases, separados por doble salto de línea. Diálogos en cursiva y con guiones largos, ej: —«Tienes mejor cara de hambre...»]\n\n**Tirada oculta**\n[Habilidad/Atributo evaluado, ej: Lectura social + credibilidad]\nResultado: [Resultado final del d20 + modificadores] — [Detalle cualitativo del éxito/fallo]\n\n## Resultado\n[Detalla en secciones numeradas qué consigue/pierde el personaje en base al éxito o fallo, ej:]\n1. [Logro 1, ej: Comida barata]\n2. [Logro 2, ej: Información útil]\n3. [Logro 3, ej: Advertencia]\n\n## Consecuencias\n* [Consecuencia física/narrativa 1, ej: ganas pista real, pierdes algo de dinero]\n* [Consecuencia física/narrativa 2, ej: fatiga/hambre mitigada o aumentada]\n\n---\n\n## Estado\n* 🪙 Dinero: **[Dinero actual expresado en oro, plata o cobre de forma realista. Escala: 1 oro = 1000 platas, 1 plata = 1000 cobres. Ej: 2 platas, 150 cobres (y los pobres solo tienen cobres, los ricos oros)]**\n* 🥖 Comida: **[Comida/Recursos actuales, ej: 1 cebolla]**\n* ⚡ Fatiga: **[Nivel cualitativo de fatiga, ej: muy alta]**\n* 🍖 Hambre: **[Nivel cualitativo de hambre, ej: alta, algo mitigada]**\n* ⚠️ Situación/Amenazas: [Resumen de la situación inmediata, ej: opción real de dormir bajo techo]\n\n### Nota del Director\n[Nota corta con explicaciones del lore, consejos o advertencias narrativas sobre el futuro de las decisiones]",
   "suggestedActions": ["Propuesta A (Contextual e inmediata)", "Propuesta B", "Propuesta C", "Propuesta D"],
@@ -1475,6 +1481,34 @@ Genera el JSON de respuesta con el desenlace narrativo literario y extenso.`;
       setLastDiceRoll(null);
       setCurrentTurnRollString("");
     }
+  };
+
+  const handleReroll = async () => {
+    if (!previousCampaignState) {
+      alert("No hay ningún turno previo registrado para regenerar.");
+      return;
+    }
+
+    const confirmReroll = window.confirm("¿Seguro que quieres deshacer el último turno y volver a intentarlo?");
+    if (!confirmReroll) return;
+
+    const restored = JSON.parse(JSON.stringify(previousCampaignState));
+    setCurrentCampaign(restored);
+    saveCampaignState(restored);
+
+    const lastTurnAction = currentCampaign.log[currentCampaign.log.length - 1]?.action;
+    if (lastTurnAction) {
+      await handleAction(lastTurnAction, restored);
+    } else {
+      alert("No se encontró ninguna acción previa para re-ejecutar. Reiniciando la introducción...");
+      window.location.reload();
+    }
+  };
+
+  const handleRerollStart = async () => {
+    const confirmReroll = window.confirm("¿Seguro que quieres volver a generar la introducción de inicio?");
+    if (!confirmReroll) return;
+    await handleStartCampaign();
   };
 
   // --- EXECUTE MASTER DIRECT QUERY FLOW ---
@@ -2550,6 +2584,27 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                             >
                               {speakingTurnNum === (turn.turnNum || i + 1) ? "⏹️ Detener" : "🔊 Escuchar"}
                             </button>
+                            {i === currentCampaign.log.length - 1 && (
+                              <button
+                                onClick={handleReroll}
+                                style={{
+                                  background: "rgba(6, 182, 212, 0.08)",
+                                  border: "1px solid rgba(6, 182, 212, 0.25)",
+                                  color: "var(--color-mental)",
+                                  cursor: "pointer",
+                                  fontSize: "0.75rem",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  marginLeft: "8px",
+                                  padding: "2px 8px",
+                                  borderRadius: "4px"
+                                }}
+                                title="Deshacer este turno y volver a intentar la última acción"
+                              >
+                                🔄 Regenerar
+                              </button>
+                            )}
                           </div>
                           <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>📅 {turn.date}</span>
                         </div>
@@ -2611,6 +2666,25 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                             title="Escuchar Narración"
                           >
                             {speakingTurnNum === 0 ? "⏹️ Detener" : "🔊 Escuchar"}
+                          </button>
+                          <button
+                            onClick={handleRerollStart}
+                            style={{
+                              background: "rgba(6, 182, 212, 0.08)",
+                              border: "1px solid rgba(6, 182, 212, 0.25)",
+                              color: "var(--color-mental)",
+                              cursor: "pointer",
+                              fontSize: "0.75rem",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              marginLeft: "8px",
+                              padding: "2px 8px",
+                              borderRadius: "4px"
+                            }}
+                            title="Volver a generar la introducción inicial"
+                          >
+                            🔄 Regenerar
                           </button>
                         </div>
                         <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>📅 {currentCampaign.temporal.date}</span>
