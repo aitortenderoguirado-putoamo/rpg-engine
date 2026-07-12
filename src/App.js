@@ -561,6 +561,7 @@ Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente 
   "suggestedActions": ["Título Opción A", "Título Opción B", "Título Opción C", "Título Opción D"],
   "currentLocation": "Nombre de la Ciudad o Ubicación de Inicio",
   "locationImagePrompt": "Descriptive English prompt of the starting location and city to generate an image with DALL-E, style Anime One Piece: vibrant, detailed.",
+  "memorySummaryUpdate": "Un párrafo corto que resuma la situación inicial del personaje en esta ubicación y su contexto (servirá como base permanente de memoria para la crónica histórica acumulada)",
   "changes": {
     "worldClimate": "Clima de inicio (ej: Soleado, Nublado, Nevando)",
     "worldSeason": "Estación de inicio (ej: Otoño, Invierno)"
@@ -602,6 +603,10 @@ Genera el JSON de respuesta con la introducción de inicio de la campaña, la ci
             suggestedActions: parsed.suggestedActions || newCampaign.suggestedActions,
             currentLocation: parsed.currentLocation || newCampaign.currentLocation
           };
+
+          if (parsed.memorySummaryUpdate) {
+            updatedCampaign.memory.summary = parsed.memorySummaryUpdate;
+          }
 
           if (parsed.changes) {
             if (parsed.changes.worldClimate) updatedCampaign.world.climate = parsed.changes.worldClimate;
@@ -1099,7 +1104,8 @@ OTRAS REGLAS DE SIMULACIÓN:
   "keyEventToAdd": "Descripción muy corta del evento clave (ej: 'Logró ingresar a la hermandad'), o null si no",
   "isDead": false,
   "deathMessage": null,
-  "turnSummary": "Resumen rápido del turno en una sola frase."
+  "turnSummary": "Resumen rápido del turno en una sola frase.",
+  "memorySummaryUpdate": "Un párrafo de resumen que actualice la crónica general acumulada de la campaña (une de forma coherente el resumen anterior que has recibido con los hechos clave y progresos de este turno, sirviendo de base de memoria permanente)"
 }`;
 
     const rollBlockText = isDiceRollEnabled && rollInfo ? `
@@ -1298,6 +1304,10 @@ Genera el JSON de respuesta con el desenlace narrativo literario y extenso.`;
           date: nextCampaign.temporal.date,
           desc: parsed.keyEventToAdd
         });
+      }
+
+      if (parsed.memorySummaryUpdate) {
+        nextCampaign.memory.summary = parsed.memorySummaryUpdate;
       }
 
       if (parsed.isDead || nextCampaign.physical.health <= 0) {
@@ -2897,35 +2907,51 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
 
                 {/* T7: DIARIO */}
                 {activeTab === "diario" && (
-                  <div>
-                    <ul style={{ paddingLeft: "10px", fontSize: "0.8rem", display: "flex", flexDirection: "column", gap: "8px" }}>
-                      {currentCampaign.memory.keyEvents.length === 0 ? (
-                        <li style={{ color: "var(--text-muted)", listStyle: "none" }}>Ningún hito registrado.</li>
-                      ) : (
-                        currentCampaign.memory.keyEvents.map((e, idx) => (
-                          <li key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.02)", paddingBottom: "4px" }}>
-                            <span style={{ color: "var(--text-primary)" }}>
-                              <span style={{ color: "var(--accent-primary)", marginRight: "6px", fontWeight: "600" }}>[{e.date}]</span>
-                              {e.desc}
-                            </span>
-                            <button
-                              onClick={() => {
-                                const updatedEvents = currentCampaign.memory.keyEvents.filter((_, i) => i !== idx);
-                                const updated = {
-                                  ...currentCampaign,
-                                  memory: { ...currentCampaign.memory, keyEvents: updatedEvents }
-                                };
-                                setCurrentCampaign(updated);
-                                saveCampaignState(updated);
-                              }}
-                              style={{ border: "none", background: "transparent", color: "var(--color-fail)", cursor: "pointer", fontSize: "0.85rem" }}
-                            >
-                              🗑️
-                            </button>
-                          </li>
-                        ))
-                      )}
-                    </ul>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+                    {/* General Chronicle Summary */}
+                    <div className="glass-panel" style={{ padding: "12px", background: "rgba(168,85,247,0.02)" }}>
+                      <span style={{ fontSize: "0.8rem", fontWeight: "700", color: "var(--accent-primary)", display: "block", marginBottom: "6px" }}>
+                        📖 Crónica Histórica Acumulada (Memoria)
+                      </span>
+                      <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", lineHeight: "1.4", margin: 0, whiteSpace: "pre-wrap" }}>
+                        {currentCampaign.memory.summary || "No hay registros en la crónica."}
+                      </p>
+                    </div>
+
+                    {/* Timeline of Key Events */}
+                    <div>
+                      <span style={{ fontSize: "0.8rem", fontWeight: "700", color: "var(--accent-secondary)", display: "block", marginBottom: "8px" }}>
+                        📅 Hitos y Hazañas Registradas
+                      </span>
+                      <ul style={{ paddingLeft: "10px", fontSize: "0.8rem", display: "flex", flexDirection: "column", gap: "8px", margin: 0 }}>
+                        {currentCampaign.memory.keyEvents.length === 0 ? (
+                          <li style={{ color: "var(--text-muted)", listStyle: "none" }}>Ningún hito registrado.</li>
+                        ) : (
+                          currentCampaign.memory.keyEvents.map((e, idx) => (
+                            <li key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.02)", paddingBottom: "4px" }}>
+                              <span style={{ color: "var(--text-primary)" }}>
+                                <span style={{ color: "var(--accent-primary)", marginRight: "6px", fontWeight: "600" }}>[{e.date}]</span>
+                                {e.desc}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  const updatedEvents = currentCampaign.memory.keyEvents.filter((_, i) => i !== idx);
+                                  const updated = {
+                                    ...currentCampaign,
+                                    memory: { ...currentCampaign.memory, keyEvents: updatedEvents }
+                                  };
+                                  setCurrentCampaign(updated);
+                                  saveCampaignState(updated);
+                                }}
+                                style={{ border: "none", background: "transparent", color: "var(--color-fail)", cursor: "pointer", fontSize: "0.85rem" }}
+                              >
+                                🗑️
+                              </button>
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    </div>
                   </div>
                 )}
 
