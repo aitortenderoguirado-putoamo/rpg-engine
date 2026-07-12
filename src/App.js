@@ -1222,12 +1222,18 @@ Sé coherente y proporcional al esfuerzo físico e intelectual de la acción:
 - Recibir heridas físicas severas: Quita Salud ("health": -10 a -35).
 
 OTRAS REGLAS DE SIMULACIÓN:
-1. Si el jugador realiza transacciones comerciales, debes incluir precios numéricos explícitos en la narrativa y reflejar los cambios en el JSON (inventoryAdd, inventoryConsume, wealth.money). OBLIGATORIO: Cuando añadas un objeto al inventario en "inventoryAdd", DEBES especificar obligatoriamente tanto el precio de coste ("cost") como el valor de mercado esperado ("value") en las monedas de cobre equivalentes (ej: "cost": 500, "value": 800). Si lo compró, "cost" es el precio de compra; si lo fabricó, el coste de materiales; si lo cazó/pescó gratis en la naturaleza, el coste es 0. En todos los casos "value" es el valor estimado de venta en el mercado general.
-2. Progreso de Habilidades: Si la acción del jugador fue un éxito usando una habilidad, puedes subir su nivel añadiendo su nombre a "skillsImproved".
-3. PNJs: Si el jugador interactúa con personajes, puedes añadirlos o actualizarlos en "npcUpdates".
-4. Si ocurre un evento histórico o hito de la campaña, agrégalo a "keyEventToAdd" (diario de eventos).
-5. Si la salud del personaje llega a 0, pon "isDead" en true y explica cómo murió en "deathMessage".
-6. Patrimonio y Finanzas: Puedes añadir o quitar propiedades en "propertiesAdd" / "propertiesRemove" y negocios en "businessesAdd" / "businessesRemove" si la narrativa lo justifica.
+1. REGISTRO COMERCIAL MATEMÁTICO OBLIGATORIO (COMPRAS Y VENTAS): 
+   - COMPRAS: Si el personaje compra un objeto por valor total X (en cobres), DEBES restar X de su dinero líquido ("changes.wealth.money": -X) y añadir obligatoriamente el objeto al inventario ("changes.inventoryAdd": [{"name": "Objeto", "qty": Q, "cat": "Categoría", "cost": X_unitario, "value": V_unitario_mercado}]).
+   - VENTAS: Si el personaje vende un objeto de su inventario por valor total Y (en cobres), DEBES sumar Y a su dinero líquido ("changes.wealth.money": Y) y restar/consumir obligatoriamente el objeto vendido de su mochila ("changes.inventoryConsume": [{"name": "Objeto", "qty": Q}]).
+   Está terminantemente PROHIBIDO narrar una compra o venta en la historia sin declarar las correspondientes operaciones matemáticas en el JSON de cambios.
+2. CREACIÓN Y RECOLECCIÓN (ARTESANÍA, CAZA, PESCA):
+   - Si el personaje fabrica algo como artesano, DEBES consumir los materiales usados de su mochila ("changes.inventoryConsume") y añadir el objeto resultante ("changes.inventoryAdd") calculando como coste ("cost") el valor de los materiales sacrificados.
+   - Si el personaje obtiene algo gratis en la naturaleza cazando, pescando o recolectando, DEBES añadir el objeto resultante ("changes.inventoryAdd") con un precio de coste ("cost") en 0 y su valor ("value") en el precio de mercado general.
+3. Progreso de Habilidades: Si la acción del jugador fue un éxito usando una habilidad, puedes subir su nivel añadiendo su nombre a "skillsImproved".
+4. PNJs: Si el jugador interactúa con personajes, puedes añadirlos o actualizarlos en "npcUpdates".
+5. Si ocurre un evento histórico o hito de la campaña, agrégalo a "keyEventToAdd" (diario de eventos).
+6. Si la salud del personaje llega a 0, pon "isDead" en true y explica cómo murió en "deathMessage".
+7. Patrimonio y Finanzas: Puedes añadir o quitar propiedades en "propertiesAdd" / "propertiesRemove" y negocios en "businessesAdd" / "businessesRemove" si la narrativa lo justifica.
 7. Clima y Estación: Puedes cambiar dinámicamente el clima en "worldClimate" (ej: 'Tormenta de nieve', 'Soleado') y la estación del año en "worldSeason" (ej: 'Invierno', 'Primavera') según progrese la historia.
 8. Transcurso del Tiempo (PROPORCIONAL Y DINÁMICO): Si la escala temporal es "moment", la hora actual tiene el formato "Día X, HH:MM" (ej: "Día 1, 08:00"). TÚ debes calcular el tiempo que tardan la acción propuesta por el jugador de forma realista y proporcional. Si la acción es extremadamente breve (ej: hacer una pregunta rápida, mirar una sala, escribir una nota, desenvainar), avanza solo de 2 a 10 minutos. Si es intermedia (ej: un combate corto, explorar a fondo un templo), avanza 30 minutos o 1 hora. Si es prolongada (ej: viajar a pie, acampar, dormir), avanza varias horas o un día. Devuelve la nueva fecha en "changes.temporal.date" (ej: "Día 1, 08:05").
 9. Propuestas de Acción (suggestedActions): Deben corresponder estrictamente al contexto geográfico/narrativo actual, el momento del día actual (ej: noche requiere sigilo/refugio/antorchas), el clima/estación del año (ej: invierno requiere calentarse/buscar abrigo), y las necesidades físicas (salud baja requiere descanso/curación). Evita opciones genéricas y aburridas.
