@@ -55,15 +55,15 @@ const ARCHETYPES = [
     name: "Guerrero ⚔️",
     desc: "Especialista en combate cuerpo a cuerpo y resistencia física.",
     attrs: { fuerza: 15, agilidad: 11, inteligencia: 8, carisma: 10, resistencia: 14 },
-    gold: 20,
+    gold: 250, // 250 cobres (clase baja-guerrero errante)
     skills: [
       { name: "Combate", level: 2 },
       { name: "Intimidación", level: 1 }
     ],
     items: [
-      { name: "Espada de Hierro", qty: 1, cat: "Arma", value: 15 },
-      { name: "Escudo de Madera", qty: 1, cat: "Defensa", value: 8 },
-      { name: "Raciones Secas", qty: 4, cat: "Comida", value: 1 }
+      { name: "Espada de Hierro", qty: 1, cat: "Arma", value: 150 }, // 150 cobres
+      { name: "Escudo de Madera", qty: 1, cat: "Defensa", value: 80 },  // 80 cobres
+      { name: "Raciones Secas", qty: 4, cat: "Comida", value: 10 }    // 10 cobres
     ],
     traits: ["Firmeza Física"]
   },
@@ -72,16 +72,16 @@ const ARCHETYPES = [
     name: "Comerciante 💰",
     desc: "Astuto negociador enfocado en acumular riquezas e información.",
     attrs: { fuerza: 9, agilidad: 10, inteligencia: 14, carisma: 15, resistencia: 10 },
-    gold: 300,
+    gold: 3500, // 3 platas, 500 cobres (clase media acomodada)
     skills: [
       { name: "Negociación", level: 2 },
       { name: "Tasación", level: 1 },
       { name: "Contabilidad", level: 1 }
     ],
     items: [
-      { name: "Ropa Elegante", qty: 1, cat: "Vestimenta", value: 25 },
-      { name: "Libro de Cuentas", qty: 1, cat: "Utilidad", value: 5 },
-      { name: "Mercancías Finas", qty: 2, cat: "Comercial", value: 40 }
+      { name: "Ropa Elegante", qty: 1, cat: "Vestimenta", value: 250 },
+      { name: "Libro de Cuentas", qty: 1, cat: "Utilidad", value: 50 },
+      { name: "Mercancías Finas", qty: 2, cat: "Comercial", value: 400 }
     ],
     traits: ["Ojo Clínico"]
   },
@@ -90,16 +90,16 @@ const ARCHETYPES = [
     name: "Noble 👑",
     desc: "Poseedor de riqueza heredada, linaje e influencia social.",
     attrs: { fuerza: 10, agilidad: 10, inteligencia: 12, carisma: 14, resistencia: 10 },
-    gold: 800,
+    gold: 1002000, // 1 oro, 2 platas (clase alta muy rica)
     skills: [
       { name: "Política", level: 2 },
       { name: "Etiqueta", level: 1 },
       { name: "Equitación", level: 1 }
     ],
     items: [
-      { name: "Anillo con Sello Familiar", qty: 1, cat: "Reliquia", value: 150 },
-      { name: "Capa de Seda", qty: 1, cat: "Vestimenta", value: 80 },
-      { name: "Caballo de Monta", qty: 1, cat: "Transporte", value: 250 }
+      { name: "Anillo con Sello Familiar", qty: 1, cat: "Reliquia", value: 1500 }, // 1 plata, 500 cobres
+      { name: "Capa de Seda", qty: 1, cat: "Vestimenta", value: 800 },
+      { name: "Caballo de Monta", qty: 1, cat: "Transporte", value: 2500 } // 2 platas, 500 cobres
     ],
     traits: ["Influencia Social"]
   },
@@ -108,16 +108,16 @@ const ARCHETYPES = [
     name: "Pícaro 🗡️",
     desc: "Experto en sigilo, robos, cerrajería y trampas.",
     attrs: { fuerza: 10, agilidad: 15, inteligencia: 11, carisma: 12, resistencia: 10 },
-    gold: 40,
+    gold: 150, // 150 cobres
     skills: [
       { name: "Sigilo", level: 2 },
       { name: "Robo", level: 1 },
       { name: "Cerrajería", level: 1 }
     ],
     items: [
-      { name: "Daga Envenenada", qty: 1, cat: "Arma", value: 20 },
-      { name: "Ganzúas", qty: 1, cat: "Herramienta", value: 8 },
-      { name: "Capa con Capucha", qty: 1, cat: "Vestimenta", value: 10 }
+      { name: "Daga Envenenada", qty: 1, cat: "Arma", value: 200 },
+      { name: "Ganzúas", qty: 1, cat: "Herramienta", value: 80 },
+      { name: "Capa con Capucha", qty: 1, cat: "Vestimenta", value: 100 }
     ],
     traits: ["Manos Rápidas"]
   },
@@ -126,16 +126,16 @@ const ARCHETYPES = [
     name: "Erudito 📚",
     desc: "Estudioso de la historia, las ciencias o la magia elemental.",
     attrs: { fuerza: 8, agilidad: 10, inteligencia: 16, carisma: 10, resistencia: 10 },
-    gold: 100,
+    gold: 500, // 500 cobres
     skills: [
       { name: "Historia", level: 2 },
       { name: "Medicina", level: 1 },
       { name: "Magia básica", level: 1 }
     ],
     items: [
-      { name: "Libro Antiguo", qty: 1, cat: "Libro", value: 40 },
-      { name: "Hierbas Curativas", qty: 5, cat: "Medicina", value: 5 },
-      { name: "Pluma y Tintero", qty: 1, cat: "Utilidad", value: 3 }
+      { name: "Libro Antiguo", qty: 1, cat: "Libro", value: 400 },
+      { name: "Hierbas Curativas", qty: 5, cat: "Medicina", value: 50 },
+      { name: "Pluma y Tintero", qty: 1, cat: "Utilidad", value: 30 }
     ],
     traits: ["Mente Analítica"]
   },
@@ -144,16 +144,16 @@ const ARCHETYPES = [
     name: "Artesano 🛠️",
     desc: "Especialista en la creación, reparación y tasación de objetos, herramientas y estructuras.",
     attrs: { fuerza: 11, agilidad: 12, inteligencia: 13, carisma: 10, resistencia: 12 },
-    gold: 80,
+    gold: 1100, // 1 plata, 100 cobres
     skills: [
       { name: "Artesanía", level: 2 },
       { name: "Reparación", level: 1 },
       { name: "Tasación", level: 1 }
     ],
     items: [
-      { name: "Martillo de Trabajo", qty: 1, cat: "Herramienta", value: 10 },
-      { name: "Caja de Herramientas", qty: 1, cat: "Herramienta", value: 20 },
-      { name: "Retazos de Materiales", qty: 5, cat: "Material", value: 2 }
+      { name: "Martillo de Trabajo", qty: 1, cat: "Herramienta", value: 100 },
+      { name: "Caja de Herramientas", qty: 1, cat: "Herramienta", value: 200 },
+      { name: "Retazos de Materiales", qty: 5, cat: "Material", value: 20 }
     ],
     traits: ["Precisión Manual"]
   },
@@ -162,10 +162,10 @@ const ARCHETYPES = [
     name: "Libre ✨",
     desc: "Total libertad para distribuir tus puntos y elegir tu propio camino.",
     attrs: { fuerza: 10, agilidad: 10, inteligencia: 10, carisma: 10, resistencia: 10 },
-    gold: 100,
+    gold: 300, // 300 cobres
     skills: [],
     items: [
-      { name: "Raciones Comunes", qty: 3, cat: "Comida", value: 1 }
+      { name: "Raciones Comunes", qty: 3, cat: "Comida", value: 10 }
     ],
     traits: ["Versátil"]
   }
@@ -199,6 +199,32 @@ const renderMarkdown = (text) => {
   } catch (e) {
     return { __html: text.replace(/\n/g, "<br/>") };
   }
+};
+
+const CoinDisplay = ({ coppers, style }) => {
+  const gold = Math.floor(coppers / 1000000);
+  const silver = Math.floor((coppers % 1000000) / 1000);
+  const copper = coppers % 1000;
+
+  return (
+    <span style={{ display: "inline-flex", gap: "6px", alignItems: "center", fontWeight: "600", ...style }}>
+      {gold > 0 && (
+        <span style={{ color: "#fbbf24", display: "inline-flex", alignItems: "center", gap: "2px" }} title={`${gold} oro`}>
+          {gold}<span style={{ fontSize: "0.8em", opacity: 0.8, color: "var(--text-muted)" }}>o</span>
+        </span>
+      )}
+      {silver > 0 && (
+        <span style={{ color: "#d1d5db", display: "inline-flex", alignItems: "center", gap: "2px" }} title={`${silver} plata`}>
+          {silver}<span style={{ fontSize: "0.8em", opacity: 0.8, color: "var(--text-muted)" }}>p</span>
+        </span>
+      )}
+      {(copper > 0 || (gold === 0 && silver === 0)) && (
+        <span style={{ color: "#ca8a04", display: "inline-flex", alignItems: "center", gap: "2px" }} title={`${copper} cobre`}>
+          {copper}<span style={{ fontSize: "0.8em", opacity: 0.8, color: "var(--text-muted)" }}>c</span>
+        </span>
+      )}
+    </span>
+  );
 };
 
 export default function App() {
@@ -622,7 +648,7 @@ ESTILO NARRATIVO REQUERIDO (NARRACIÓN LITERARIA EN PRIMERA PERSONA - ALTA CALID
 
 Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
 {
-  "narrative": "Escribe tu respuesta narrada en Markdown rico adoptando estrictamente la estética de las partidas de rol de ChatGPT. Debes seguir exactamente la siguiente estructura de formato en tu texto:\\n\\n# [NOMBRE DE LA CIUDAD O UBICACIÓN DE INICIO EN MAYÚSCULAS]\\n## [Contexto Sociohistórico Corto de la Partida]\\n### [Estación del año y clima inicial]\\n### **Día 1 — 08:00 (Mañana)**\\n\\n[Prosa narrativa inmersiva y de bienvenida de 3 a 5 párrafos cortos de 1 a 3 frases cada uno, separados por doble salto de línea, introduciendo al héroe, dónde se encuentra físicamente, la atmósfera de las calles, la situación social/política de la ciudad y el contexto inicial de su trasfondo. Diálogos en cursiva y con guiones largos].\\n\\n---\\n\\n## Estado\\n* 🪙 Dinero: **[Dinero inicial del personaje en negrita]**\\n* 🥖 Comida: **Suficiente para empezar**\\n* 🏡 Refugio/Vivienda: **Estable**\\n\\n### Nota del Director\\n[Breve nota de bienvenida del Master]",
+  "narrative": "Escribe tu respuesta narrada en Markdown rico adoptando estrictamente la estética de las partidas de rol de ChatGPT. Debes seguir exactamente la siguiente estructura de formato en tu texto:\\n\\n# [NOMBRE DE LA CIUDAD O UBICACIÓN DE INICIO EN MAYÚSCULAS]\\n## [Contexto Sociohistórico Corto de la Partida]\\n### [Estación del año y clima inicial]\\n### **Día 1 — 08:00 (Mañana)**\\n\\n[Prosa narrativa inmersiva y de bienvenida de 3 a 5 párrafos cortos de 1 a 3 frases cada uno, separados por doble salto de línea, introduciendo al héroe, dónde se encuentra físicamente, la atmósfera de las calles, la situación social/política de la ciudad y el contexto inicial de su trasfondo. Diálogos en cursiva y con guiones largos].\\n\\n---\\n\\n## Estado\\n* 🪙 Dinero: **[Dinero inicial del personaje expresado en monedas de oro, plata o cobre de forma realista. Recuerda la escala: 1 oro = 1000 platas, 1 plata = 1000 cobres. Ej: 1 plata, 100 cobres]**\\n* 🥖 Comida: **Suficiente para empezar**\\n* 🏡 Refugio/Vivienda: **Estable**\\n\\n### Nota del Director\\n[Breve nota de bienvenida del Master]",
   "suggestedActions": ["Título Opción A", "Título Opción B", "Título Opción C", "Título Opción D"],
   "currentLocation": "Nombre de la Ciudad o Ubicación de Inicio",
   "locationImagePrompt": "Highly descriptive English prompt of the starting scene for DALL-E 3. It MUST explicitly incorporate: the starting city, the specific starting sub-location/district (e.g. narrow dirty alleyway), the starting weather (e.g. pouring rain), the starting season (e.g. late autumn), and the time of day (e.g. early morning). Style Anime One Piece: vibrant, colorful, detailed shading, clean anime outlines.",
@@ -1147,7 +1173,7 @@ OTRAS REGLAS DE SIMULACIÓN:
 9. Propuestas de Acción (suggestedActions): Deben corresponder estrictamente al contexto geográfico/narrativo actual, el momento del día actual (ej: noche requiere sigilo/refugio/antorchas), el clima/estación del año (ej: invierno requiere calentarse/buscar abrigo), y las necesidades físicas (salud baja requiere descanso/curación). Evita opciones genéricas y aburridas.
 10. Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
 {
-  "narrative": "Escribe tu respuesta narrada en Markdown rico adoptando estrictamente la estética de las partidas de rol de ChatGPT. Debes seguir exactamente la siguiente estructura de formato en tu texto:\n\n# [NOMBRE DE LA UBICACIÓN / MUNDO EN MAYÚSCULAS]\n## [Año, Época o Momento Histórico de la partida]\n### [Estación del año y clima actual]\n### **[Momento del día o hora] — [Nombre del interlocutor/lugar secundario si aplica (ej: Atardecer — Monna Alessa)]**\n\n[Prosa narrativa inmersiva y de diálogos en párrafos cortos de 1 a 3 frases, separados por doble salto de línea. Diálogos en cursiva y con guiones largos, ej: —«Tienes mejor cara de hambre...»]\n\n**Tirada oculta**\n[Habilidad/Atributo evaluado, ej: Lectura social + credibilidad]\nResultado: [Resultado final del d20 + modificadores] — [Detalle cualitativo del éxito/fallo]\n\n## Resultado\n[Detalla en secciones numeradas qué consigue/pierde el personaje en base al éxito o fallo, ej:]\n1. [Logro 1, ej: Comida barata]\n2. [Logro 2, ej: Información útil]\n3. [Logro 3, ej: Advertencia]\n\n## Consecuencias\n* [Consecuencia física/narrativa 1, ej: ganas pista real, pierdes algo de dinero]\n* [Consecuencia física/narrativa 2, ej: fatiga/hambre mitigada o aumentada]\n\n---\n\n## Estado\n* 🪙 Dinero: **[Dinero actual en negrita, ej: 1 soldo, 8 quattrini]**\n* 🥖 Comida: **[Comida/Recursos actuales, ej: 1 cebolla]**\n* ⚡ Fatiga: **[Nivel cualitativo de fatiga, ej: muy alta]**\n* 🍖 Hambre: **[Nivel cualitativo de hambre, ej: alta, algo mitigada]**\n* ⚠️ Situación/Amenazas: [Resumen de la situación inmediata, ej: opción real de dormir bajo techo]\n\n### Nota del Director\n[Nota corta con explicaciones del lore, consejos o advertencias narrativas sobre el futuro de las decisiones]",
+  "narrative": "Escribe tu respuesta narrada en Markdown rico adoptando estrictamente la estética de las partidas de rol de ChatGPT. Debes seguir exactamente la siguiente estructura de formato en tu texto:\n\n# [NOMBRE DE LA UBICACIÓN / MUNDO EN MAYÚSCULAS]\n## [Año, Época o Momento Histórico de la partida]\n### [Estación del año y clima actual]\n### **[Momento del día o hora] — [Nombre del interlocutor/lugar secundario si aplica (ej: Atardecer — Monna Alessa)]**\n\n[Prosa narrativa inmersiva y de diálogos en párrafos cortos de 1 a 3 frases, separados por doble salto de línea. Diálogos en cursiva y con guiones largos, ej: —«Tienes mejor cara de hambre...»]\n\n**Tirada oculta**\n[Habilidad/Atributo evaluado, ej: Lectura social + credibilidad]\nResultado: [Resultado final del d20 + modificadores] — [Detalle cualitativo del éxito/fallo]\n\n## Resultado\n[Detalla en secciones numeradas qué consigue/pierde el personaje en base al éxito o fallo, ej:]\n1. [Logro 1, ej: Comida barata]\n2. [Logro 2, ej: Información útil]\n3. [Logro 3, ej: Advertencia]\n\n## Consecuencias\n* [Consecuencia física/narrativa 1, ej: ganas pista real, pierdes algo de dinero]\n* [Consecuencia física/narrativa 2, ej: fatiga/hambre mitigada o aumentada]\n\n---\n\n## Estado\n* 🪙 Dinero: **[Dinero actual expresado en oro, plata o cobre de forma realista. Escala: 1 oro = 1000 platas, 1 plata = 1000 cobres. Ej: 2 platas, 150 cobres (y los pobres solo tienen cobres, los ricos oros)]**\n* 🥖 Comida: **[Comida/Recursos actuales, ej: 1 cebolla]**\n* ⚡ Fatiga: **[Nivel cualitativo de fatiga, ej: muy alta]**\n* 🍖 Hambre: **[Nivel cualitativo de hambre, ej: alta, algo mitigada]**\n* ⚠️ Situación/Amenazas: [Resumen de la situación inmediata, ej: opción real de dormir bajo techo]\n\n### Nota del Director\n[Nota corta con explicaciones del lore, consejos o advertencias narrativas sobre el futuro de las decisiones]",
   "suggestedActions": ["Propuesta A (Contextual e inmediata)", "Propuesta B", "Propuesta C", "Propuesta D"],
   "currentLocation": "Lugar actual (corto)",
   "locationImagePrompt": "Highly descriptive English prompt of the current scene for DALL-E 3. It MUST explicitly incorporate: the city, the specific sub-location/part of the city (e.g. inside a dim tavern with flickering candles), the current weather (e.g. snowing heavily), the current season (e.g. winter), and the time of day (e.g. late evening). Style Anime One Piece: vibrant, colorful, detailed shading, clean anime outlines.",
@@ -2946,21 +2972,25 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                     <div>
                       <h4 style={{ fontSize: "0.8rem", color: "var(--text-secondary)", borderBottom: "1px solid var(--card-border)", paddingBottom: "2px", marginBottom: "8px" }}>Balance Financiero</h4>
                       <ul style={{ listStyle: "none", fontSize: "0.8rem", display: "flex", flexDirection: "column", gap: "6px" }}>
-                        <li style={{ display: "flex", justifyContent: "space-between" }}>
+                        <li style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <span style={{ color: "var(--text-muted)" }}>Dinero Líquido:</span>
-                          <strong style={{ color: "var(--color-money)" }}>{currentCampaign.wealth.money} 💰</strong>
+                          <CoinDisplay coppers={currentCampaign.wealth.money} />
                         </li>
-                        <li style={{ display: "flex", justifyContent: "space-between" }}>
+                        <li style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <span style={{ color: "var(--text-muted)" }}>Ingresos / Turno:</span>
-                          <strong style={{ color: "var(--color-hunger)" }}>+{currentCampaign.wealth.income || 0} 💰</strong>
+                          <span style={{ color: "#10b981", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                            +<CoinDisplay coppers={currentCampaign.wealth.income || 0} />
+                          </span>
                         </li>
-                        <li style={{ display: "flex", justifyContent: "space-between" }}>
+                        <li style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <span style={{ color: "var(--text-muted)" }}>Gastos / Turno:</span>
-                          <strong style={{ color: "var(--color-health)" }}>-{currentCampaign.wealth.expenses || 0} 💰</strong>
+                          <span style={{ color: "#ef4444", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                            -<CoinDisplay coppers={currentCampaign.wealth.expenses || 0} />
+                          </span>
                         </li>
-                        <li style={{ display: "flex", justifyContent: "space-between" }}>
+                        <li style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <span style={{ color: "var(--text-muted)" }}>Deudas Acumuladas:</span>
-                          <strong style={{ color: "var(--color-fatigue)" }}>{currentCampaign.wealth.debts || 0} 💰</strong>
+                          <CoinDisplay coppers={currentCampaign.wealth.debts || 0} style={{ color: "#ef4444" }} />
                         </li>
                       </ul>
                     </div>
@@ -2973,9 +3003,9 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                         ) : (
                           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                             {currentCampaign.wealth.properties.map((p, idx) => (
-                              <div key={idx} style={{ fontSize: "0.75rem", background: "rgba(255,255,255,0.03)", padding: "2px 6px", borderRadius: "4px", display: "flex", justifyContent: "space-between" }}>
+                              <div key={idx} style={{ fontSize: "0.75rem", background: "rgba(255,255,255,0.03)", padding: "2px 6px", borderRadius: "4px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <span style={{ color: "var(--text-primary)" }}>🏠 {p.name}</span>
-                                <span style={{ color: "var(--color-money)" }}>{p.value} 💰</span>
+                                <CoinDisplay coppers={p.value} />
                               </div>
                             ))}
                           </div>
@@ -2989,9 +3019,11 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                         ) : (
                           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                             {currentCampaign.wealth.businesses.map((b, idx) => (
-                              <div key={idx} style={{ fontSize: "0.75rem", background: "rgba(255,255,255,0.03)", padding: "2px 6px", borderRadius: "4px", display: "flex", justifyContent: "space-between" }}>
+                              <div key={idx} style={{ fontSize: "0.75rem", background: "rgba(255,255,255,0.03)", padding: "2px 6px", borderRadius: "4px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <span style={{ color: "var(--text-primary)" }}>⚙️ {b.name}</span>
-                                <span style={{ color: "var(--color-hunger)" }}>+{b.income}/turno</span>
+                                <span style={{ color: "#10b981", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                                  +<CoinDisplay coppers={b.income} />/turno
+                                </span>
                               </div>
                             ))}
                           </div>
@@ -3050,8 +3082,8 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                                   <span style={{ display: "block", fontSize: "0.65rem", color: "var(--text-muted)" }}>{item.cat}</span>
                                 </td>
                                 <td style={{ textAlign: "center", color: "var(--accent-primary)", fontWeight: "600" }}>{item.qty}</td>
-                                <td style={{ textAlign: "center", color: "var(--text-secondary)" }}>{costUnit}</td>
-                                <td style={{ textAlign: "center", color: "var(--color-money)", fontWeight: "500" }}>{valUnit}</td>
+                                <td style={{ textAlign: "center" }}><CoinDisplay coppers={costUnit} /></td>
+                                <td style={{ textAlign: "center" }}><CoinDisplay coppers={valUnit} /></td>
                                 <td style={{ textAlign: "right" }}>
                                   <span style={{ 
                                     padding: "2px 6px", 
