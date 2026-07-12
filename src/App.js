@@ -158,14 +158,58 @@ const ARCHETYPES = [
     traits: ["Precisión Manual"]
   },
   {
+    id: "huerfano",
+    name: "Huérfano 🎒",
+    desc: "Crecido en las calles sin recursos, experto en pasar desapercibido y supervivencia urbana.",
+    attrs: { fuerza: 8, agilidad: 13, inteligencia: 10, carisma: 12, resistencia: 9 },
+    gold: 15, // 15 cobres
+    skills: [
+      { name: "Sigilo", level: 1 },
+      { name: "Supervivencia", level: 1 }
+    ],
+    items: [
+      { name: "Ropa Pobre", qty: 1, cat: "Vestimenta", value: 5 },
+      { name: "Trozo de Pan", qty: 1, cat: "Comida", value: 2 },
+      { name: "Cuchillo Oxidado", qty: 1, cat: "Arma", value: 10 }
+    ],
+    properties: [
+      { name: "Choza Derruida", value: 0 }
+    ],
+    traits: ["Pérdida Temprana"]
+  },
+  {
+    id: "esclavo",
+    name: "Esclavo ⛓️",
+    desc: "Sometido a trabajos forzados, con alta resistencia física pero sin patrimonio.",
+    attrs: { fuerza: 13, agilidad: 11, inteligencia: 9, carisma: 7, resistencia: 14 },
+    gold: 0, // 0 cobres
+    skills: [
+      { name: "Resistencia", level: 2 },
+      { name: "Trabajo Duro", level: 1 }
+    ],
+    items: [
+      { name: "Ropa Pobre", qty: 1, cat: "Vestimenta", value: 5 },
+      { name: "Cuchillo Oxidado", qty: 1, cat: "Arma", value: 10 }
+    ],
+    properties: [
+      { name: "Choza Derruida", value: 0 }
+    ],
+    traits: ["Espíritu Indomable"]
+  },
+  {
     id: "libre",
     name: "Libre ✨",
-    desc: "Total libertad para distribuir tus puntos y elegir tu propio camino.",
+    desc: "Total libertad para distribuir tus puntos y empezar con equipamiento básico humilde.",
     attrs: { fuerza: 10, agilidad: 10, inteligencia: 10, carisma: 10, resistencia: 10 },
-    gold: 300, // 300 cobres
+    gold: 80, // 80 cobres
     skills: [],
     items: [
-      { name: "Raciones Comunes", qty: 3, cat: "Comida", value: 10 }
+      { name: "Ropa Pobre", qty: 1, cat: "Vestimenta", value: 5 },
+      { name: "Trozo de Pan", qty: 1, cat: "Comida", value: 2 },
+      { name: "Cuchillo Oxidado", qty: 1, cat: "Arma", value: 10 }
+    ],
+    properties: [
+      { name: "Choza Derruida", value: 0 }
     ],
     traits: ["Versátil"]
   }
@@ -545,8 +589,7 @@ export default function App() {
     else if (wizardTimeScale === "month") dateStr = "Mes 1";
     else if (wizardTimeScale === "year") dateStr = "Año 1";
 
-    let inheritedGold = 0;
-    let inheritedItem = null;
+    const startingProperties = arch?.properties ? JSON.parse(JSON.stringify(arch.properties)) : [];
     let inheritedProperties = [];
     let initialMemorySummary = `La historia de ${wizardName} da comienzo en la región de ${regionStr || worldNameStr}.`;
 
@@ -560,6 +603,8 @@ export default function App() {
 
       initialMemorySummary = `Tras la trágica caída de su predecesor, ${heritageSource.character.name}, su heredero legítimo ${wizardName} toma el relevo de su legado. Acompañado de parte de sus pertenencias y una pesada herencia, comienza una nueva etapa en este mundo persistente.`;
     }
+
+    const finalProperties = [...inheritedProperties, ...startingProperties];
 
     const finalGold = initialGold + inheritedGold;
     if (inheritedItem) {
@@ -602,7 +647,7 @@ export default function App() {
       wealth: { 
         money: finalGold, 
         currency: "Monedas", 
-        properties: inheritedProperties, 
+        properties: finalProperties, 
         income: 0, 
         expenses: 0, 
         debts: 0,
@@ -671,7 +716,7 @@ DATOS DE LA CAMPAÑA:
 - Trasfondo del Personaje: ${wizardBackstory || "Aventurero comenzando su viaje."}
 - Arquetipo: ${arch?.name || "Libre"}
 - Habilidades Iniciales: ${initialSkills.map(s => `${s.name} (nv ${s.level})`).join(", ")}
-- Oro Inicial: ${finalGold} monedas.
+- Oro Inicial: ${finalGold} cobres (recuerda desglosarlo en el JSON y en el estado usando estrictamente la escala: 1 oro = 1000 platas = 1000000 cobres. Ej: si empieza con 3500 cobres se describe y muestra como '3 platas, 500 cobres').
 
 ${wizardRegion === "random" ? "INSTRUCCIÓN ESPECIAL DE UBICACIÓN ALEATORIA:\nEl jugador ha seleccionado una Ubicación Aleatoria. TÚ debes elegir una ubicación geográfica real del mapa mundial (país, ciudad, pueblo) que sea coherente con la era histórica o realidad contemporánea elegida. Escribe el nombre de esta ciudad/país en el campo 'currentLocation' del JSON." : ""}
 
@@ -2139,20 +2184,64 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                   Personaliza tu Oro e Inventario Inicial
                 </h3>
 
-                {/* Starting Gold */}
+                {/* Starting Gold Split */}
                 <div className="glass-panel" style={{ padding: "15px", marginBottom: "20px" }}>
-                  <label style={{ display: "block", fontSize: "0.9rem", color: "var(--text-primary)", marginBottom: "6px", fontWeight: "600" }}>
-                    🪙 Oro / Dinero Inicial:
+                  <label style={{ display: "block", fontSize: "0.9rem", color: "var(--text-primary)", marginBottom: "10px", fontWeight: "600" }}>
+                    🪙 Patrimonio Inicial Desglosado:
                   </label>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <input 
-                      type="number" 
-                      value={wizardGold} 
-                      onChange={(e) => setWizardGold(Math.max(0, parseInt(e.target.value, 10) || 0))} 
-                      style={{ width: "120px", fontSize: "1.1rem", fontWeight: "700", textAlign: "center" }}
-                    />
-                    <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>monedas / recursos de inicio.</span>
+                  <div style={{ display: "flex", gap: "15px", flexWrap: "wrap" }}>
+                    {/* Oro */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <span style={{ fontSize: "0.75rem", color: "#fbbf24", fontWeight: "600" }}>Oro (o)</span>
+                      <input 
+                        type="number" 
+                        min="0"
+                        value={Math.floor(wizardGold / 1000000)} 
+                        onChange={(e) => {
+                          const val = Math.max(0, parseInt(e.target.value, 10) || 0);
+                          const currentSilver = Math.floor((wizardGold % 1000000) / 1000);
+                          const currentCopper = wizardGold % 1000;
+                          setWizardGold((val * 1000000) + (currentSilver * 1000) + currentCopper);
+                        }} 
+                        style={{ width: "90px", fontSize: "1rem", fontWeight: "700", textAlign: "center", border: "1px solid #fbbf24", color: "#fbbf24", background: "rgba(251,191,36,0.03)", padding: "4px", borderRadius: "4px" }}
+                      />
+                    </div>
+                    {/* Plata */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <span style={{ fontSize: "0.75rem", color: "#d1d5db", fontWeight: "600" }}>Plata (p)</span>
+                      <input 
+                        type="number" 
+                        min="0"
+                        value={Math.floor((wizardGold % 1000000) / 1000)} 
+                        onChange={(e) => {
+                          const val = Math.max(0, parseInt(e.target.value, 10) || 0);
+                          const currentGold = Math.floor(wizardGold / 1000000);
+                          const currentCopper = wizardGold % 1000;
+                          setWizardGold((currentGold * 1000000) + (val * 1000) + currentCopper);
+                        }} 
+                        style={{ width: "90px", fontSize: "1rem", fontWeight: "700", textAlign: "center", border: "1px solid #9ca3af", color: "#d1d5db", background: "rgba(156,163,175,0.03)", padding: "4px", borderRadius: "4px" }}
+                      />
+                    </div>
+                    {/* Cobre */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <span style={{ fontSize: "0.75rem", color: "#ca8a04", fontWeight: "600" }}>Cobre (c)</span>
+                      <input 
+                        type="number" 
+                        min="0"
+                        value={wizardGold % 1000} 
+                        onChange={(e) => {
+                          const val = Math.max(0, parseInt(e.target.value, 10) || 0);
+                          const currentGold = Math.floor(wizardGold / 1000000);
+                          const currentSilver = Math.floor((wizardGold % 1000000) / 1000);
+                          setWizardGold((currentGold * 1000000) + (currentSilver * 1000) + val);
+                        }} 
+                        style={{ width: "90px", fontSize: "1rem", fontWeight: "700", textAlign: "center", border: "1px solid #d97706", color: "#ca8a04", background: "rgba(217,119,6,0.03)", padding: "4px", borderRadius: "4px" }}
+                      />
+                    </div>
                   </div>
+                  <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "8px" }}>
+                    Equivalencia: 1 oro = 1.000 platas | 1 plata = 1.000 cobres. (Valor total: <CoinDisplay coppers={wizardGold} />)
+                  </p>
                 </div>
 
                 {/* Starting Inventory List */}
@@ -2169,8 +2258,8 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                         <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px", background: "var(--panel-bg-hover)", borderRadius: "6px", border: "1px solid var(--border-subtle)" }}>
                           <div>
                             <strong style={{ color: "var(--text-primary)", fontSize: "0.85rem" }}>{item.name}</strong>
-                            <span style={{ display: "block", fontSize: "0.7rem", color: "var(--text-muted)" }}>
-                              ({item.cat}) — Coste: {item.cost !== undefined ? item.cost : (item.value || 0)} | Mercado: {item.value || 0} c/u
+                            <span style={{ display: "block", fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "2px" }}>
+                              ({item.cat}) — Coste: <CoinDisplay coppers={item.cost !== undefined ? item.cost : (item.value || 0)} /> | Mercado: <CoinDisplay coppers={item.value || 0} /> c/u
                             </span>
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -2255,7 +2344,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                       </select>
                     </div>
                     <div>
-                      <label style={{ display: "block", fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "4px" }}>Precio Coste:</label>
+                      <label style={{ display: "block", fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "4px" }}>Precio Coste (c):</label>
                       <input 
                         type="number" 
                         value={newItemCost} 
@@ -2264,7 +2353,7 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                       />
                     </div>
                     <div>
-                      <label style={{ display: "block", fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "4px" }}>Valor Mercado:</label>
+                      <label style={{ display: "block", fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "4px" }}>Valor Mercado (c):</label>
                       <input 
                         type="number" 
                         value={newItemValue} 
@@ -2273,6 +2362,9 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                       />
                     </div>
                   </div>
+                  <p style={{ fontSize: "0.65rem", color: "var(--text-muted)", marginTop: "4px" }}>
+                    * Escribe los precios en cobres (c) (ej: 1 plata = 1000, 1 oro = 1000000, 50 cobres = 50).
+                  </p>
                   <div style={{ display: "flex", justifyContent: "flex-end" }}>
                     <button 
                       onClick={() => {
