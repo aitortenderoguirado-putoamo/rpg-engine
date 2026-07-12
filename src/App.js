@@ -247,6 +247,7 @@ export default function App() {
   const [newItemName, setNewItemName] = useState("");
   const [newItemQty, setNewItemQty] = useState(1);
   const [newItemCat, setNewItemCat] = useState("Utilidad");
+  const [newItemCost, setNewItemCost] = useState(0);
   const [newItemValue, setNewItemValue] = useState(0);
 
   // Game UI State
@@ -457,7 +458,10 @@ export default function App() {
       setWizardAttrPool(5);
       setWizardSelectedSkills(arch.skills.map(s => s.name));
       setWizardGold(arch.gold || 100);
-      setWizardInventory(arch.items ? JSON.parse(JSON.stringify(arch.items)) : []);
+      setWizardInventory(arch.items ? JSON.parse(JSON.stringify(arch.items)).map(item => ({
+        ...item,
+        cost: item.cost !== undefined ? item.cost : (item.value || 0)
+      })) : []);
     }
   }, [wizardArchetype]);
 
@@ -1132,14 +1136,14 @@ Sé coherente y proporcional al esfuerzo físico e intelectual de la acción:
 - Recibir heridas físicas severas: Quita Salud ("health": -10 a -35).
 
 OTRAS REGLAS DE SIMULACIÓN:
-1. Si el jugador realiza transacciones comerciales, debes incluir precios numéricos explícitos en la narrativa y reflejar los cambios en el JSON (inventoryAdd, inventoryConsume, wealth.money).
+1. Si el jugador realiza transacciones comerciales, debes incluir precios numéricos explícitos en la narrativa y reflejar los cambios en el JSON (inventoryAdd, inventoryConsume, wealth.money). OBLIGATORIO: Cuando añadas un objeto al inventario (sea comprado, creado como artesano, o recolectado pescando/cazando), debes separar el precio de coste ("cost") y el valor de mercado esperado ("value"). Si lo compró, "cost" es el precio de compra; si lo fabricó, el coste de materiales; si lo cazó/pescó gratis en la naturaleza, el coste es 0. En todos los casos "value" es el valor estimado de venta en el mercado general.
 2. Progreso de Habilidades: Si la acción del jugador fue un éxito usando una habilidad, puedes subir su nivel añadiendo su nombre a "skillsImproved".
 3. PNJs: Si el jugador interactúa con personajes, puedes añadirlos o actualizarlos en "npcUpdates".
 4. Si ocurre un evento histórico o hito de la campaña, agrégalo a "keyEventToAdd" (diario de eventos).
 5. Si la salud del personaje llega a 0, pon "isDead" en true y explica cómo murió en "deathMessage".
 6. Patrimonio y Finanzas: Puedes añadir o quitar propiedades en "propertiesAdd" / "propertiesRemove" y negocios en "businessesAdd" / "businessesRemove" si la narrativa lo justifica.
 7. Clima y Estación: Puedes cambiar dinámicamente el clima en "worldClimate" (ej: 'Tormenta de nieve', 'Soleado') y la estación del año en "worldSeason" (ej: 'Invierno', 'Primavera') según progrese la historia.
-8. Transcurso del Tiempo (PROPORCIONAL Y DINÁMICO): Si la escala temporal es "moment", la hora actual tiene el formato "Día X, HH:MM" (ej: "Día 1, 08:00"). TÚ debes calcular el tiempo que tarda la acción propuesta por el jugador de forma realista y proporcional. Si la acción es extremadamente breve (ej: hacer una pregunta rápida, mirar una sala, escribir una nota, desenvainar), avanza solo de 2 a 10 minutos. Si es intermedia (ej: un combate corto, explorar a fondo un templo), avanza 30 minutos o 1 hora. Si es prolongada (ej: viajar a pie, acampar, dormir), avanza varias horas o un día. Devuelve la nueva fecha en "changes.temporal.date" (ej: "Día 1, 08:05").
+8. Transcurso del Tiempo (PROPORCIONAL Y DINÁMICO): Si la escala temporal es "moment", la hora actual tiene el formato "Día X, HH:MM" (ej: "Día 1, 08:00"). TÚ debes calcular el tiempo que tardan la acción propuesta por el jugador de forma realista y proporcional. Si la acción es extremadamente breve (ej: hacer una pregunta rápida, mirar una sala, escribir una nota, desenvainar), avanza solo de 2 a 10 minutos. Si es intermedia (ej: un combate corto, explorar a fondo un templo), avanza 30 minutos o 1 hora. Si es prolongada (ej: viajar a pie, acampar, dormir), avanza varias horas o un día. Devuelve la nueva fecha en "changes.temporal.date" (ej: "Día 1, 08:05").
 9. Propuestas de Acción (suggestedActions): Deben corresponder estrictamente al contexto geográfico/narrativo actual, el momento del día actual (ej: noche requiere sigilo/refugio/antorchas), el clima/estación del año (ej: invierno requiere calentarse/buscar abrigo), y las necesidades físicas (salud baja requiere descanso/curación). Evita opciones genéricas y aburridas.
 10. Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
 {
@@ -1282,9 +1286,25 @@ Genera el JSON de respuesta con el desenlace narrativo literario y extenso.`;
           changes.inventoryAdd.forEach(item => {
             const idx = nextCampaign.inventory.findIndex(i => i.name === item.name);
             if (idx !== -1) {
+              const oldQty = nextCampaign.inventory[idx].qty;
               nextCampaign.inventory[idx].qty += item.qty;
+              
+              // Weighted average cost
+              if (item.cost !== undefined) {
+                const oldCost = nextCampaign.inventory[idx].cost !== undefined ? nextCampaign.inventory[idx].cost : (nextCampaign.inventory[idx].value || 0);
+                nextCampaign.inventory[idx].cost = Math.round(((oldQty * oldCost) + (item.qty * item.cost)) / nextCampaign.inventory[idx].qty);
+              }
+              if (item.value !== undefined) {
+                nextCampaign.inventory[idx].value = item.value;
+              }
             } else {
-              nextCampaign.inventory.push({ ...item });
+              nextCampaign.inventory.push({
+                name: item.name,
+                qty: item.qty,
+                cat: item.cat || "Utilidad",
+                cost: item.cost !== undefined ? item.cost : (item.value || 0),
+                value: item.value !== undefined ? item.value : (item.cost || 0)
+              });
             }
           });
         }
@@ -2081,7 +2101,9 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                         <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px", background: "var(--panel-bg-hover)", borderRadius: "6px", border: "1px solid var(--border-subtle)" }}>
                           <div>
                             <strong style={{ color: "var(--text-primary)", fontSize: "0.85rem" }}>{item.name}</strong>
-                            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginLeft: "8px" }}>({item.cat}) — Valor: {item.value || 0} c/u</span>
+                            <span style={{ display: "block", fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                              ({item.cat}) — Coste: {item.cost !== undefined ? item.cost : (item.value || 0)} | Mercado: {item.value || 0} c/u
+                            </span>
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -2127,14 +2149,14 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                   <h4 style={{ fontSize: "0.85rem", fontWeight: "600", color: "var(--text-secondary)", marginBottom: "10px" }}>
                     ➕ Añadir Objeto Personalizado:
                   </h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: "8px", alignItems: "end" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr", gap: "8px", alignItems: "end", marginBottom: "12px" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "4px" }}>Nombre del Objeto:</label>
                       <input 
                         type="text" 
                         value={newItemName} 
                         onChange={(e) => setNewItemName(e.target.value)}
-                        placeholder="Ej: Brújula Dorada"
+                        placeholder="Ej: Seda de Cantón"
                         style={{ width: "100%", padding: "6px" }}
                       />
                     </div>
@@ -2161,26 +2183,52 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                         <option value="Utilidad">Utilidad ⚙️</option>
                         <option value="Libro">Libro 📚</option>
                         <option value="Reliquia">Reliquia 💎</option>
+                        <option value="Material">Material 📦</option>
                       </select>
                     </div>
                     <div>
-                      <button 
-                        onClick={() => {
-                          if (!newItemName.trim()) return;
-                          setWizardInventory(prev => [
-                            ...prev, 
-                            { name: newItemName.trim(), qty: newItemQty, cat: newItemCat, value: newItemValue }
-                          ]);
-                          setNewItemName("");
-                          setNewItemQty(1);
-                          setNewItemValue(0);
-                        }}
-                        disabled={!newItemName.trim()}
-                        style={{ padding: "8px", width: "100%", background: "var(--accent-gradient)", color: "#fff", border: "none", borderRadius: "4px", fontSize: "0.8rem", cursor: "pointer", fontWeight: "600" }}
-                      >
-                        Añadir
-                      </button>
+                      <label style={{ display: "block", fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "4px" }}>Precio Coste:</label>
+                      <input 
+                        type="number" 
+                        value={newItemCost} 
+                        onChange={(e) => setNewItemCost(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                        style={{ width: "100%", padding: "6px" }}
+                      />
                     </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "4px" }}>Valor Mercado:</label>
+                      <input 
+                        type="number" 
+                        value={newItemValue} 
+                        onChange={(e) => setNewItemValue(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                        style={{ width: "100%", padding: "6px" }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <button 
+                      onClick={() => {
+                        if (!newItemName.trim()) return;
+                        setWizardInventory(prev => [
+                          ...prev, 
+                          { 
+                            name: newItemName.trim(), 
+                            qty: newItemQty, 
+                            cat: newItemCat, 
+                            cost: newItemCost, 
+                            value: newItemValue 
+                          }
+                        ]);
+                        setNewItemName("");
+                        setNewItemQty(1);
+                        setNewItemCost(0);
+                        setNewItemValue(0);
+                      }}
+                      disabled={!newItemName.trim()}
+                      style={{ padding: "8px 24px", background: "var(--accent-gradient)", color: "#fff", border: "none", borderRadius: "4px", fontSize: "0.8rem", cursor: "pointer", fontWeight: "600" }}
+                    >
+                      Añadir a Mochila
+                    </button>
                   </div>
                 </div>
 
@@ -2957,31 +3005,69 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                 {/* T5: INVENTARIO */}
                 {activeTab === "inventario" && (
                   <div>
-                    <table style={{ width: "100%", fontSize: "0.8rem", borderCollapse: "collapse" }}>
+                    <table style={{ width: "100%", fontSize: "0.75rem", borderCollapse: "collapse" }}>
                       <thead>
                         <tr style={{ borderBottom: "1px solid var(--card-border)", color: "var(--text-muted)" }}>
-                          <th style={{ textAlign: "left", paddingBottom: "4px" }}>Nombre</th>
-                          <th style={{ textAlign: "center", paddingBottom: "4px" }}>Cant.</th>
-                          <th style={{ textAlign: "left", paddingBottom: "4px" }}>Categoría</th>
-                          <th style={{ textAlign: "right", paddingBottom: "4px" }}>Valor</th>
+                          <th style={{ textAlign: "left", paddingBottom: "6px" }}>Nombre</th>
+                          <th style={{ textAlign: "center", paddingBottom: "6px" }}>Cant.</th>
+                          <th style={{ textAlign: "center", paddingBottom: "6px" }}>Coste</th>
+                          <th style={{ textAlign: "center", paddingBottom: "6px" }}>Mercado</th>
+                          <th style={{ textAlign: "right", paddingBottom: "6px" }}>Margen</th>
                         </tr>
                       </thead>
                       <tbody>
                         {currentCampaign.inventory.length === 0 ? (
                           <tr>
-                            <td colSpan="4" style={{ textAlign: "center", padding: "10px", color: "var(--text-muted)" }}>
+                            <td colSpan="5" style={{ textAlign: "center", padding: "10px", color: "var(--text-muted)", fontStyle: "italic" }}>
                               Inventario vacío.
                             </td>
                           </tr>
                         ) : (
-                          currentCampaign.inventory.map((item, idx) => (
-                            <tr key={idx} style={{ borderBottom: "1px solid rgba(255,255,255,0.02)" }}>
-                              <td style={{ padding: "6px 0", color: "var(--text-primary)" }}>{item.name}</td>
-                              <td style={{ textAlign: "center", color: "var(--accent-primary)" }}>{item.qty}</td>
-                              <td style={{ color: "var(--text-secondary)" }}>{item.cat}</td>
-                              <td style={{ textAlign: "right", color: "var(--color-money)" }}>{item.value} 💰</td>
-                            </tr>
-                          ))
+                          currentCampaign.inventory.map((item, idx) => {
+                            const costUnit = item.cost !== undefined ? item.cost : (item.value || 0);
+                            const valUnit = item.value || 0;
+                            const marginUnit = valUnit - costUnit;
+                            const marginTotal = marginUnit * item.qty;
+                            
+                            // Styling for the margin badge
+                            let marginColor = "var(--text-muted)";
+                            let marginBg = "transparent";
+                            let marginText = `${marginTotal}`;
+                            
+                            if (marginTotal > 0) {
+                              marginColor = "#10b981"; // green
+                              marginBg = "rgba(16, 185, 129, 0.1)";
+                              marginText = `+${marginTotal}`;
+                            } else if (marginTotal < 0) {
+                              marginColor = "#ef4444"; // red
+                              marginBg = "rgba(239, 68, 68, 0.1)";
+                            }
+
+                            return (
+                              <tr key={idx} style={{ borderBottom: "1px solid rgba(255,255,255,0.02)" }}>
+                                <td style={{ padding: "8px 0", color: "var(--text-primary)", fontWeight: "500" }}>
+                                  {item.name}
+                                  <span style={{ display: "block", fontSize: "0.65rem", color: "var(--text-muted)" }}>{item.cat}</span>
+                                </td>
+                                <td style={{ textAlign: "center", color: "var(--accent-primary)", fontWeight: "600" }}>{item.qty}</td>
+                                <td style={{ textAlign: "center", color: "var(--text-secondary)" }}>{costUnit}</td>
+                                <td style={{ textAlign: "center", color: "var(--color-money)", fontWeight: "500" }}>{valUnit}</td>
+                                <td style={{ textAlign: "right" }}>
+                                  <span style={{ 
+                                    padding: "2px 6px", 
+                                    borderRadius: "4px", 
+                                    fontSize: "0.7rem", 
+                                    fontWeight: "600",
+                                    color: marginColor, 
+                                    background: marginBg,
+                                    display: "inline-block"
+                                  }}>
+                                    {marginText}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })
                         )}
                       </tbody>
                     </table>
