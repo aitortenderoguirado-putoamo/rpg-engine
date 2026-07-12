@@ -804,18 +804,36 @@ Genera el JSON de respuesta con la introducción de inicio de la campaña, la ci
     const attrMod = Math.floor((attrValue - 10) / 2);
     modifiers.push({ name: `Atributo (${matchedAttr})`, val: attrMod });
 
-    let skillMod = 0;
-    let matchedSkill = null;
-    campaign.character.skills.forEach(skill => {
-      const nameNorm = skill.name.toLowerCase();
-      if (textLower.includes(nameNorm)) {
-        matchedSkill = skill.name;
-        skillMod = Math.min(skill.level, 4);
-      }
-    });
+    // Sync skills (give bonus if owned, penalty if missing and action requires it)
+    const skillKeywords = [
+      { name: "Combate", keys: ["combate", "espada", "lucha", "pelea", "atacar", "pelear", "golpear", "daga", "cuchillo", "espadazo"] },
+      { name: "Negociación", keys: ["negociar", "comerciar", "vender", "comprar", "regatear", "trato", "tasar", "precio", "adquirir", "compro", "vendo"] },
+      { name: "Sigilo", keys: ["sigilo", "esconder", "ocultar", "desapercibido", "escurrir", "silencioso", "ocultarme"] },
+      { name: "Robo", keys: ["robar", "hurto", "carterista", "birlar", "robarle", "sustraer"] },
+      { name: "Cerrajería", keys: ["ganzúa", "cerradura", "forzar", "abrir cofre", "cerrojo", "ganzúas"] },
+      { name: "Artesanía", keys: ["crear", "fabricar", "construir", "artesano", "taller", "moldear", "tallar", "artesanía"] },
+      { name: "Reparación", keys: ["reparar", "arreglar", "forjar"] },
+      { name: "Supervivencia", keys: ["cazar", "pescar", "recolectar", "refugio", "acampar", "sobrevivir", "bosque", "leña"] },
+      { name: "Medicina", keys: ["curar", "medicina", "hierbas", "venda", "herida", "sanar"] }
+    ];
 
-    if (matchedSkill) {
-      modifiers.push({ name: `Habilidad (${matchedSkill})`, val: skillMod });
+    let matchedSkill = null;
+    let skillMod = 0;
+
+    for (const sk of skillKeywords) {
+      if (sk.keys.some(k => textLower.includes(k))) {
+        matchedSkill = sk.name;
+        const playerSkill = campaign.character.skills.find(s => s.name.toLowerCase() === sk.name.toLowerCase());
+        if (playerSkill) {
+          skillMod = playerSkill.level;
+          modifiers.push({ name: `Habilidad (${sk.name})`, val: skillMod });
+        } else {
+          // Untrained penalty (quitar)
+          skillMod = -2;
+          modifiers.push({ name: `Falta de Habilidad (${sk.name})`, val: -2 });
+        }
+        break; // Match one dominant skill per action
+      }
     }
 
     if (campaign.character.age > 55) {
@@ -831,26 +849,32 @@ Genera el JSON de respuesta con la introducción de inicio de la campaña, la ci
     if (health < 25) healthPenalty = -4;
     else if (health < 50) healthPenalty = -2;
     else if (health < 75) healthPenalty = -1;
-    if (healthPenalty !== 0) {
-      modifiers.push({ name: "Salud baja", val: healthPenalty });
-    }
 
     const fatigue = campaign.physical.fatigue;
     let fatiguePenalty = 0;
     if (fatigue > 85) fatiguePenalty = -4;
     else if (fatigue > 65) fatiguePenalty = -2;
     else if (fatigue > 45) fatiguePenalty = -1;
-    if (fatiguePenalty !== 0) {
-      modifiers.push({ name: "Fatiga alta", val: fatiguePenalty });
-    }
 
     const hunger = campaign.physical.hunger;
     let hungerPenalty = 0;
     if (hunger > 80) hungerPenalty = -3;
     else if (hunger > 60) hungerPenalty = -1;
-    if (hungerPenalty !== 0) {
-      modifiers.push({ name: "Hambre", val: hungerPenalty });
+
+    // Apply difficulty tolerance modifiers (bajo y medio son más tolerables)
+    if (campaign.difficulty === "easy") {
+      healthPenalty = Math.min(0, Math.ceil(healthPenalty * 0.25)); // Mínimo impacto (25%)
+      fatiguePenalty = Math.min(0, Math.ceil(fatiguePenalty * 0.25));
+      hungerPenalty = Math.min(0, Math.ceil(hungerPenalty * 0.25));
+    } else if (campaign.difficulty === "medium") {
+      healthPenalty = Math.min(0, Math.ceil(healthPenalty * 0.6)); // Impacto moderado (60%)
+      fatiguePenalty = Math.min(0, Math.ceil(fatiguePenalty * 0.6));
+      hungerPenalty = Math.min(0, Math.ceil(hungerPenalty * 0.6));
     }
+
+    if (healthPenalty !== 0) modifiers.push({ name: "Salud baja", val: healthPenalty });
+    if (fatiguePenalty !== 0) modifiers.push({ name: "Fatiga alta", val: fatiguePenalty });
+    if (hungerPenalty !== 0) modifiers.push({ name: "Hambre", val: hungerPenalty });
 
     let diffMod = 0;
     if (campaign.difficulty === "easy") diffMod = 3;
@@ -1467,6 +1491,36 @@ Genera el JSON de respuesta con el desenlace narrativo literario y extenso.`;
               nextCampaign.character.skills.push({ name: skillName, level: 1 });
             }
           });
+        }
+
+        // Ponderar subida automática de habilidades en función de éxitos de dados (35% Éxito, 100% Crítico)
+        if (rollInfo && rollInfo.matchedSkill) {
+          const skillName = rollInfo.matchedSkill;
+          const isSuccess = rollInfo.status === "Éxito";
+          const isCritical = rollInfo.status === "¡CRÍTICO!";
+
+          if (isSuccess || isCritical) {
+            const upgradeChance = isCritical ? 1.0 : 0.35;
+            if (Math.random() < upgradeChance) {
+              const sIdx = nextCampaign.character.skills.findIndex(s => s.name.toLowerCase() === skillName.toLowerCase());
+              if (sIdx !== -1) {
+                if (nextCampaign.character.skills[sIdx].level < 5) {
+                  nextCampaign.character.skills[sIdx].level += 1;
+                  nextCampaign.memory.keyEvents.push({
+                    date: nextCampaign.temporal.date,
+                    desc: `¡Mejoré mi habilidad de ${nextCampaign.character.skills[sIdx].name} a nivel ${nextCampaign.character.skills[sIdx].level}! 📈`
+                  });
+                }
+              } else {
+                // Aprendizaje inicial de habilidad faltante
+                nextCampaign.character.skills.push({ name: skillName, level: 1 });
+                nextCampaign.memory.keyEvents.push({
+                  date: nextCampaign.temporal.date,
+                  desc: `¡Aprendí la habilidad de ${skillName} a nivel 1 tras un éxito audaz! 📈`
+                });
+              }
+            }
+          }
         }
 
         if (changes.attrChanges) {
