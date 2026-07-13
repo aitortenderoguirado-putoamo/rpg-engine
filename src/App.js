@@ -329,6 +329,7 @@ export default function App() {
   const [customAction, setCustomAction] = useState("");
   const [isRolling, setIsRolling] = useState(false);
   const [isLlmLoading, setIsLlmLoading] = useState(false);
+  const [streamingNarrative, setStreamingNarrative] = useState("");
   const [lastDiceRoll, setLastDiceRoll] = useState(null);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [isImageGenerating, setIsImageGenerating] = useState(false);
@@ -950,8 +951,8 @@ Genera el JSON de respuesta con la introducción de inicio de la campaña, la ci
     return date;
   };
 
-  // --- OpenAI CHAT COMPLETIONS API CALL ---
-  const callGPTNarrator = async (systemPrompt, userPrompt) => {
+  // --- OpenAI CHAT COMPLETIONS API CALL (SSE Streaming) ---
+  const callGPTNarrator = async (systemPrompt, userPrompt, onChunk) => {
     if (!apiKey) {
       throw new Error("No OpenAI API key found. Please insert it in Settings.");
     }
@@ -964,7 +965,7 @@ Genera el JSON de respuesta con la introducción de inicio de la campaña, la ci
       },
       body: JSON.stringify({
         model: apiModel,
-        response_format: { type: "json_object" },
+        stream: true,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
@@ -978,11 +979,35 @@ Genera el JSON de respuesta con la introducción de inicio de la campaña, la ci
 
     if (!response.ok) {
       const err = await response.json();
-      throw new Error(err.error?.message || "Error calling GPT-4o API.");
+      throw new Error(err.error?.message || "Error calling OpenAI API.");
     }
 
-    const data = await response.json();
-    return data.choices[0].message.content;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let fullContent = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split("\n").filter(line => line.startsWith("data: "));
+
+      for (const line of lines) {
+        const data = line.replace("data: ", "").trim();
+        if (data === "[DONE]") break;
+        try {
+          const parsed = JSON.parse(data);
+          const delta = parsed.choices?.[0]?.delta?.content || "";
+          if (delta) {
+            fullContent += delta;
+            if (onChunk) onChunk(fullContent);
+          }
+        } catch (_) {}
+      }
+    }
+
+    return fullContent;
   };
 
   // --- OpenAI DALL-E IMAGE GENERATION ---
@@ -1336,7 +1361,21 @@ ${rollBlockText}
 Genera el JSON de respuesta.`;
 
     try {
-      const rawContent = await callGPTNarrator(systemPrompt, userPrompt);
+      setStreamingNarrative("");
+      const rawContent = await callGPTNarrator(systemPrompt, userPrompt, (partial) => {
+        // Extract narrative string from partial JSON as it streams in real time
+        try {
+          const narMatch = partial.match(/"narrative"\s*:\s*"((?:[^"\\]|\\.)*)/s);
+          if (narMatch) {
+            const raw = narMatch[1]
+              .replace(/\\n/g, "\n")
+              .replace(/\\t/g, "\t")
+              .replace(/\\"/g, '"')
+              .replace(/\\\\/g, "\\");
+            setStreamingNarrative(raw);
+          }
+        } catch (_) {}
+      });
       
       let cleanContent = rawContent.trim();
       if (cleanContent.startsWith("```json")) {
@@ -1634,6 +1673,7 @@ Genera el JSON de respuesta.`;
     } finally {
       setIsRolling(false);
       setIsLlmLoading(false);
+      setStreamingNarrative("");
       setLastDiceRoll(null);
       setCurrentTurnRollString("");
     }
@@ -2866,7 +2906,23 @@ Responde a la consulta de forma descriptiva basándote en el contexto de juego a
                    </div>
                  )}
 
-                {!isRolling && currentCampaign.log.length === 0 && !isLlmLoading && (
+                 {isLlmLoading && !isRolling && streamingNarrative && (
+                   <div className="chat-bubble master-bubble">
+                     <div className="master-bubble-content">
+                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", borderBottom: "1px solid rgba(255,255,255,0.04)", paddingBottom: "4px" }}>
+                         <strong style={{ color: "var(--accent-primary)", fontSize: "0.85rem" }}>🔮 MASTER <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: "400" }}>narrando...</span></strong>
+                         <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--accent-primary)", display: "inline-block", animation: "pulse 1s infinite" }} />
+                       </div>
+                       <div 
+                         className="markdown-content" 
+                         dangerouslySetInnerHTML={renderMarkdown(streamingNarrative)} 
+                         style={{ fontSize: "1.05rem", lineHeight: "1.65", color: "var(--text-primary)" }}
+                       />
+                     </div>
+                   </div>
+                 )}
+
+                 {isLlmLoading && !isRolling && !streamingNarrative && (
                   <div className="chat-bubble master-bubble">
                     <div className="master-bubble-content">
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", borderBottom: "1px solid rgba(255,255,255,0.04)", paddingBottom: "4px" }}>
