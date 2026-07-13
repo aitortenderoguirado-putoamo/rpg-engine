@@ -969,9 +969,10 @@ Genera el JSON de respuesta con la introducción de inicio de la campaña, la ci
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
-        temperature: 0.85,
-        frequency_penalty: 0.3,
-        presence_penalty: 0.2
+        temperature: 0.78,
+        max_tokens: 1800,
+        frequency_penalty: 0.25,
+        presence_penalty: 0.15
       })
     });
 
@@ -1191,34 +1192,39 @@ Genera el JSON de respuesta con la introducción de inicio de la campaña, la ci
     nextCampaign.temporal.date = nextDate;
 
     // 5. Build Prompt Context Blocks
+    // Compact state — only what the model needs per turn (avoids token bloat)
     const stateContext = JSON.stringify({
       turn: nextCampaign.turn,
       character: {
         name: nextCampaign.character.name,
         age: nextCampaign.character.age,
         identity: nextCampaign.character.identity,
-        backstory: nextCampaign.character.backstory,
         attrs: nextCampaign.character.attrs,
-        skills: nextCampaign.character.skills,
+        skills: nextCampaign.character.skills.map(s => ({ n: s.name, lv: s.level })),
         traits: nextCampaign.character.traits
       },
       physical: nextCampaign.physical,
-      wealth: nextCampaign.wealth,
-      inventory: nextCampaign.inventory,
-      npcs: nextCampaign.npcs,
-      world: nextCampaign.world,
+      wealth: {
+        money: nextCampaign.wealth.money,
+        income: nextCampaign.wealth.income,
+        expenses: nextCampaign.wealth.expenses,
+        debts: nextCampaign.wealth.debts,
+        properties: nextCampaign.wealth.properties,
+        businesses: nextCampaign.wealth.businesses
+      },
+      inventory: nextCampaign.inventory.map(i => ({ n: i.name, q: i.qty, cost: i.cost, val: i.value })),
+      npcs: nextCampaign.npcs.map(n => ({ name: n.name, role: n.role, relation: n.relation, location: n.location, status: n.status })),
       currentLocation: nextCampaign.currentLocation
     });
 
-    const memoryBlock = `
-Resumen de campaña acumulado: "${nextCampaign.memory.summary}"
-Eventos Históricos Clave en Diario (diario/timeline):
-${nextCampaign.memory.keyEvents.slice(-20).map((e, i) => `- [${e.date}] ${e.desc}`).join("\n")}
-`;
+    const memoryBlock = `Resumen acumulado: "${nextCampaign.memory.summary.slice(0, 800)}"
+Hitos recientes:
+${nextCampaign.memory.keyEvents.slice(-8).map(e => `- [${e.date}] ${e.desc}`).join("\n")}`;
 
-    const recentHistory = nextCampaign.log.slice(-10).map((turn, index) => {
-      return `Turno ${turn.turnNum || index} [${turn.date}]: Acción: "${turn.action}"\nTirada: ${turn.textRoll}\nResultado: ${turn.narrative}`;
-    }).join("\n\n");
+    // Compact recent history — summaries only, not full narrative (saves ~60% tokens)
+    const recentHistory = nextCampaign.log.slice(-6).map((turn, index) => {
+      return `T${turn.turnNum || index} [${turn.date}]: "${turn.action}" → ${turn.summary || turn.narrative?.slice(0, 120) || ""}`;
+    }).join("\n");
 
     // SYSTEM PROMPT: Instructs GPT-4o to calculate PROPORTIONAL hunger and fatigue consumption based on the action
     const systemPrompt = `Eres el Master de un juego de rol narrativo y simulación.
@@ -1228,6 +1234,7 @@ ESTILO NARRATIVO REQUERIDO (NARRACIÓN LITERARIA EN PRIMERA PERSONA - ALTA CALID
 - LA NARRACIÓN DEBE SER SIEMPRE EN PRIMERA PERSONA DEL SINGULAR: Todo lo que le ocurre al protagonista (mi personaje), sus acciones, diálogos, sensaciones físicas e internas deben narrarse en primera persona ('Yo', 'Me', 'Mi', 'Mis'). Por ejemplo, di 'Siento el frío' en vez de 'Sientes el frío'.
 - Sigue escrupulosamente la estructura de títulos, párrafos cortos de 1 a 3 frases, apartados de resultado y consecuencias, tabla o lista de Estado del Personaje, y Nota del Director detalladas en el campo "narrative" (NO incluyas la lista de opciones/decisiones en el texto narrative, ya que se mostrarán en los botones interactivos sugeridos).
 - CALIDAD DE PROSA Y VOCABULARIO: Evita repeticiones innecesarias, clichés literarios y frases hechas. Varía la longitud de las oraciones para darle ritmo a la narración. Describe minuciosamente el entorno (sonidos de fondo, olores, tacto de los objetos, cambios de iluminación, temperatura del aire) para situar la escena con fuerza tridimensional.
+- NEGRITAS OBLIGATORIAS: Usa **negrita** para remarcar siempre: nombres de PNJ importantes cuando aparecen por primera vez en el turno, objetos clave que el personaje adquiere o usa, cantidades de dinero en transacciones, estadísticas críticas (salud baja, hambre extrema), nombres de lugares importantes y momentos decisivos de la acción.
 - DIÁLOGOS REALISTAS: Los diálogos deben tener personalidad propia, reflejar el estrato social, dialecto, estado de ánimo y cansancio de los personajes. Usa guiones largos en cursiva, ej: —«Le cuento lo justo: he entrado dos días en un taller...».
 - Evita por completo resúmenes rápidos, explicaciones vagas o acelerar el ritmo del relato. Narra cada detalle con calma y gravedad.
 
@@ -1264,8 +1271,9 @@ OTRAS REGLAS DE SIMULACIÓN:
 10. Propuestas de Acción (suggestedActions): Deben corresponder estrictamente al contexto geográfico/narrativo actual, el momento del día actual (ej: noche requiere sigilo/refugio/antorchas), el clima/estación del año (ej: invierno requiere calentarse/buscar abrigo), y las necesidades físicas (salud baja requiere descanso/curación). Evita opciones genéricas y aburridas.
 11. MODIFICADOR SEMÁNTICO DE PLAN / ACCIÓN: Evalúa críticamente la sensatez e ingenio de la acción escrita por el jugador en su situación actual. Si es un plan inteligente, táctico o astuto: devuelve en el JSON principal "planModifier" con un valor positivo de +1 a +4, y explica la razón en "planModifierReason" (ej: "Aprovechar la cobertura alta"). Si es un plan temerario, insensato o absurdo: devuelve "planModifier" con un valor negativo de -1 a -4 y explica la razón en "planModifierReason" (ej: "Ir de frente sin escudo"). Si es neutro: devuelve "planModifier": 0 y "planModifierReason": "".
 12. RASGOS DINÁMICOS DEL PERSONAJE: Los rasgos son marcas permanentes del alma del personaje que se adquieren o pierden por sus experiencias y aventuras, NO por compra. Si la narrativa justifica ganar un nuevo rasgo positivo (ej: una hazaña notable, superar un trauma, adquirir una reputación), agrégalo en "traitsAdd". Si la narrativa justifica perder un rasgo (ej: traición, herida grave que cambia al personaje, muerte simbólica de una creencia), agrégalo en "traitsRemove". Usa los rasgos con sobriedad: máximo 1 cambio por turno, y solo cuando el acontecimiento narrativo lo justifique plenamente.
-13. CONTROL DE ALUCINACIONES Y BUCLES: Evita por completo la redundancia de adjetivos, listas interminables, repeticiones obsesivas de sinónimos o declinaciones latinas extrañas. Cada punto de la lista numerada "Resultado" y cada viñeta en "Consecuencias" del JSON de respuesta debe ser conciso, directo y tener una longitud máxima de 10 a 20 palabras.
-14. Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
+13. SINCRONIZACIÓN DATOS↔NARRATIVA (CRÍTICO): El JSON de estado que recibes es la única realidad del mundo. La narración DEBE ser coherente con esos datos: si el personaje tiene dinero X nunca lo describes con más sin actualizar "changes.wealth.money"; los objetos en su inventario puede usarlos (los que no están, no existen); los PNJs en la lista de npcs deben reflejar su relación real con el personaje; las propiedades y negocios deben mencionarse cuando sean relevantes. El campo "memorySummaryUpdate" DEBE incluir los cambios de inventario, dinero y relaciones con PNJs relevantes para que queden en la memoria permanente.
+14. CONTROL DE ALUCINACIONES Y BUCLES: Evita por completo la redundancia de adjetivos, listas interminables, repeticiones obsesivas de sinónimos o declinaciones latinas extrañas. Cada punto de la lista numerada "Resultado" y cada viñeta en "Consecuencias" del JSON de respuesta debe ser conciso, directo y tener una longitud máxima de 10 a 20 palabras.
+15. Debes responder EXCLUSIVAMENTE en formato JSON estructurado según el siguiente esquema (sin texto fuera del JSON):
 {
   "narrative": "Escribe tu respuesta narrada en Markdown rico adoptando estrictamente la estética de las partidas de rol de ChatGPT. Debes seguir exactamente la siguiente estructura de formato en tu texto:\n\n# [NOMBRE DE LA UBICACIÓN / MUNDO EN MAYÚSCULAS]\n## [Año, Época o Momento Histórico de la partida]\n### [Estación del año y clima actual]\n### **[Momento del día o hora] — [Nombre del interlocutor/lugar secundario si aplica (ej: Atardecer — Monna Alessa)]**\n\n[Prosa narrativa inmersiva y de diálogos en párrafos cortos de 1 a 3 frases, separados por doble salto de línea. Diálogos en cursiva y con guiones largos, ej: —«Tienes mejor cara de hambre...»]\n\n**Tirada oculta**\n[Habilidad/Atributo evaluado, ej: Lectura social + credibilidad]\nResultado: [Resultado final del d20 + modificadores] — [Detalle cualitativo del éxito/fallo]\n\n## Resultado\n[Detalla en secciones numeradas qué consigue/pierde el personaje en base al éxito o fallo, ej:]\n1. [Logro 1, ej: Comida barata]\n2. [Logro 2, ej: Información útil]\n3. [Logro 3, ej: Advertencia]\n\n## Consecuencias\n* [Consecuencia física/narrativa 1, ej: ganas pista real, pierdes algo de dinero]\n* [Consecuencia física/narrativa 2, ej: fatiga/hambre mitigada o aumentada]\n\n---\n\n## Estado\n* 🪙 Dinero: **[Dinero actual expresado en oro, plata o cobre de forma realista. Escala: 1 oro = 1000 platas, 1 plata = 1000 cobres. Ej: 2 platas, 150 cobres (y los pobres solo tienen cobres, los ricos oros)]**\n* 🥖 Comida: **[Comida/Recursos actuales, ej: 1 cebolla]**\n* ⚡ Fatiga: **[Nivel cualitativo de fatiga, ej: muy alta]**\n* 🍖 Hambre: **[Nivel cualitativo de hambre, ej: alta, algo mitigada]**\n* ⚠️ Siutación/Amenazas: [Resumen de la situación inmediata, ej: opción real de dormir bajo techo]\n\n### Nota del Director\n[Nota corta con explicaciones del lore, consejos o advertencias narrativas sobre el futuro de las decisiones]",
   "suggestedActions": ["Propuesta A (Contextual e inmediata)", "Propuesta B", "Propuesta C", "Propuesta D"],
@@ -1313,21 +1321,19 @@ El resultado de la acción debe determinarse de forma puramente narrativa, lógi
 OBLIGATORIO: En la sección "Tirada oculta" del Markdown narrative, en lugar de poner números de tiradas de dados, pon una breve explicación narrativa del esfuerzo/capacidad (ej: "Lectura social + credibilidad") y pon en "Resultado" un veredicto cualitativo lógico (ej: "Éxito narrativo" o "Fallo narrativo") según la historia.
 `;
 
-    const userPrompt = `
-HISTORIAL DE CAMPAÑA RECIENTE:
+    const userPrompt = `HISTORIAL RECIENTE (6 últimos turnos):
 ${recentHistory}
 
-DATOS DE MEMORIA DEL MUNDO:
+MEMORIA Y MUNDO:
 ${memoryBlock}
 
-ESTADO ACTUAL DETALLADO DEL PERSONAJE:
+ESTADO ACTUAL DEL PERSONAJE (JSON compacto):
 ${stateContext}
 
-ACCIÓN PROPUESTA POR EL JUGADOR:
+ACCIÓN DEL JUGADOR:
 "${actionText}"
 ${rollBlockText}
-
-Genera el JSON de respuesta con el desenlace narrativo literario y extenso.`;
+Genera el JSON de respuesta.`;
 
     try {
       const rawContent = await callGPTNarrator(systemPrompt, userPrompt);
